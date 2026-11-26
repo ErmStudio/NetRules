@@ -102,36 +102,53 @@ case "$act" in
     ;;
 
   toggle_video)
-    if [ "$video_on" = "1" ]; then sed -i '/googlevideo/d' "$RULES"; new=0
-    else sed -i 's|^  # === VIDEO-BEGIN ===|  # === VIDEO-BEGIN ===\n  - DOMAIN-SUFFIX,googlevideo.com|' "$RULES"; new=1; fi
+    want=$(printf '%s' "$q" | sed -n 's/.*[&?]on=\([01]\).*/\1/p')
+    if [ -z "$want" ]; then [ "$video_on" = "1" ] && want=0 || want=1; fi
+    if [ "$want" = "1" ]; then
+      grep -q 'googlevideo' "$RULES" 2>/dev/null || \
+        sed -i 's|^  # === VIDEO-BEGIN ===|  # === VIDEO-BEGIN ===\n  - DOMAIN-SUFFIX,googlevideo.com|' "$RULES"
+    else
+      sed -i '/googlevideo/d' "$RULES"
+    fi
     restart_bg
-    printf 'Content-Type: application/json\n\n{"ok":true,"video":%s}\n' "$new"
+    printf 'Content-Type: application/json\n\n{"ok":true,"video":%s}\n' "$want"
     ;;
 
   toggle_social)
-    if [ "$social_on" = "1" ]; then
-      sed -i '/DOMAIN-SUFFIX,instagram.com/d;/DOMAIN-SUFFIX,cdninstagram.com/d;/DOMAIN-SUFFIX,facebook.com/d;/DOMAIN-SUFFIX,fbcdn.net/d;/DOMAIN-SUFFIX,whatsapp.com/d;/DOMAIN-SUFFIX,whatsapp.net/d' "$RULES"; new=0
+    want=$(printf '%s' "$q" | sed -n 's/.*[&?]on=\([01]\).*/\1/p')
+    if [ -z "$want" ]; then [ "$social_on" = "1" ] && want=0 || want=1; fi
+    if [ "$want" = "1" ]; then
+      grep -q 'DOMAIN-SUFFIX,instagram.com' "$RULES" 2>/dev/null || \
+        sed -i 's|^  # === SOCIAL-BEGIN ===|  # === SOCIAL-BEGIN ===\n  - DOMAIN-SUFFIX,instagram.com\n  - DOMAIN-SUFFIX,cdninstagram.com\n  - DOMAIN-SUFFIX,facebook.com\n  - DOMAIN-SUFFIX,fbcdn.net\n  - DOMAIN-SUFFIX,whatsapp.com\n  - DOMAIN-SUFFIX,whatsapp.net|' "$RULES"
     else
-      sed -i 's|^  # === SOCIAL-BEGIN ===|  # === SOCIAL-BEGIN ===\n  - DOMAIN-SUFFIX,instagram.com\n  - DOMAIN-SUFFIX,cdninstagram.com\n  - DOMAIN-SUFFIX,facebook.com\n  - DOMAIN-SUFFIX,fbcdn.net\n  - DOMAIN-SUFFIX,whatsapp.com\n  - DOMAIN-SUFFIX,whatsapp.net|' "$RULES"; new=1
+      sed -i '/DOMAIN-SUFFIX,instagram.com/d;/DOMAIN-SUFFIX,cdninstagram.com/d;/DOMAIN-SUFFIX,facebook.com/d;/DOMAIN-SUFFIX,fbcdn.net/d;/DOMAIN-SUFFIX,whatsapp.com/d;/DOMAIN-SUFFIX,whatsapp.net/d' "$RULES"
     fi
     restart_bg
-    printf 'Content-Type: application/json\n\n{"ok":true,"social":%s}\n' "$new"
+    printf 'Content-Type: application/json\n\n{"ok":true,"social":%s}\n' "$want"
     ;;
 
   toggle_vpn)
-    if [ "$vpn_on" = "1" ]; then ( /opt/etc/init.d/S99mihomo stop >/dev/null 2>&1 & ); new=0
-    else ( /opt/etc/init.d/S99mihomo start >/dev/null 2>&1 & ); new=1; fi
-    printf 'Content-Type: application/json\n\n{"ok":true,"vpn":%s}\n' "$new"
+    want=$(printf '%s' "$q" | sed -n 's/.*[&?]on=\([01]\).*/\1/p')
+    if [ -z "$want" ]; then [ "$vpn_on" = "1" ] && want=0 || want=1; fi
+    if [ "$want" = "1" ]; then
+      ( /opt/etc/init.d/S99mihomo start >/dev/null 2>&1 & )
+    else
+      ( /opt/etc/init.d/S99mihomo stop >/dev/null 2>&1 & )
+    fi
+    printf 'Content-Type: application/json\n\n{"ok":true,"vpn":%s}\n' "$want"
     ;;
 
   toggle_zapret)
-    if [ "$zapret_up" = "1" ]; then
-      /opt/etc/init.d/S51nfqws2 stop >/dev/null 2>&1; new=0
+    want=$(printf '%s' "$q" | sed -n 's/.*[&?]on=\([01]\).*/\1/p')
+    if [ -z "$want" ]; then [ "$zapret_up" = "1" ] && want=0 || want=1; fi
+    if [ "$want" = "1" ]; then
+      /opt/etc/init.d/S51nfqws2 start >/dev/null 2>&1
+      sleep 2
+      ps 2>/dev/null | grep -q '[n]fqws2' || want=0
     else
-      /opt/etc/init.d/S51nfqws2 start >/dev/null 2>&1; sleep 2; new=1
-      ps 2>/dev/null | grep -q '[n]fqws2' || new=0
+      /opt/etc/init.d/S51nfqws2 stop >/dev/null 2>&1
     fi
-    printf 'Content-Type: application/json\n\n{"ok":true,"zapret":%s}\n' "$new"
+    printf 'Content-Type: application/json\n\n{"ok":true,"zapret":%s}\n' "$want"
     ;;
 
   speedtest)

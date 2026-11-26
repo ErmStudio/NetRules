@@ -100,8 +100,9 @@ body.light .toast{background:#fff;border-color:rgba(79,140,255,.35);color:#12203
 .pol-direct{background:rgba(255,255,255,.08);color:#9aa8bf}
 .pol-reject{background:rgba(248,113,113,.16);color:#ffb4b4}
 .acts{justify-content:center}
-.acts-5{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
-.acts-5 button,.acts-5 a{width:100%;min-width:0;max-width:none;padding:11px 8px;font-size:12.5px}
+.acts-5{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
+.acts-5>a{display:flex}
+.acts-5 button{width:100%;height:100%;min-width:0;max-width:none;padding:11px 8px;font-size:12.5px;display:flex;align-items:center;justify-content:center}
 @media(max-width:1000px){.acts-5{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:620px){.acts-5{grid-template-columns:repeat(2,1fr)}}
 .acts button,.acts a{flex:1 1 165px;max-width:250px;min-width:140px}.card{transition:transform .25s,border-color .25s,box-shadow .25s}
@@ -201,6 +202,7 @@ section{animation:fade .35s ease}
       <button class="primary" onclick="act('update')">Обновить подписку</button>
       <button onclick="act('backup')" title="Копия конфигов и скриптов в /storage/mihomo-backup/ГГГГММДД, хранится 7 копий">Бэкап сейчас</button>
       <button onclick="act('restart')">Перезапустить mihomo</button>
+      <a href="http://192.168.1.1/" target="_blank" style="text-decoration:none"><button>Админка роутера ↗</button></a>
       <a href="http://mihomo.lan:9090/ui/metacubexd/" target="_blank" style="text-decoration:none"><button>Панель mihomo ↗</button></a>
       <a href="http://192.168.1.1:90/" target="_blank" style="text-decoration:none"><button>Панель zapret ↗</button></a>
     </div>
@@ -380,7 +382,7 @@ function loadNet(){
     $('#net-time').textContent='обновлено '+new Date().toLocaleTimeString('ru-RU');
     var dv=(d.devices||[]).map(function(x){
       var label=x.name?(x.name+' · '+x.ip):x.ip;
-      return '<div class="srow"><span class="nm" style="cursor:pointer" onclick="renameDevice(\''+x.ip+'\',\''+(x.name||'').replace(/'/g,'')+'\')" title="'+x.ip+'">'+label+'</span><span>'+x.n+' соед · '+fb(x.dl)+'</span></div>';
+      return '<div class="srow"><span class="nm" style="cursor:pointer" onclick="renameDevice(\''+x.ip+'\',\''+(x.name||'').replace(/'/g,'')+'\')" title="'+x.ip+'">'+label+'</span><span>'+x.n+' соед · '+fb(x.dl)+' (активные)</span></div>';
     }).join('')||'<div class="srow"><span class="nm">нет соединений</span></div>';
     $('#net-devices').innerHTML=dv;
     var dm=(d.domains||[]).map(function(x){
@@ -497,7 +499,7 @@ function act(a){
 }
 function bindToggle(id,action,on,off){
   $(id).addEventListener('change',function(e){
-    fetch('/cgi-bin/api.cgi?action='+action,{method:'POST'}).then(function(){toast(e.target.checked?on:off);setTimeout(refresh,2000);});
+    fetch('/cgi-bin/api.cgi?action='+action+'&on='+(e.target.checked?1:0),{method:'POST'}).then(function(){toast(e.target.checked?on:off);setTimeout(refresh,2000);});
   });
 }
 bindToggle('#t-vpn','toggle_vpn','VPN включён','VPN выключен');
