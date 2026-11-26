@@ -67,8 +67,9 @@ case "$act" in
       fi
     fi
     printf 'Content-Type: application/json\n\n'
-    printf '{"mihomo":%s,"vpn":%s,"video":%s,"social":%s,"zapret":%s,"nodes":%s,"last":"%s","uptime":%s,"memtotal":%s,"memavail":%s,"node":"%s","country":"%s","delay":"%s","mup":%s,"dl":%s,"ul":%s}\n' \
-      "$mihomo_up" "$vpn_on" "$video_on" "$social_on" "$zapret_up" "$nodes" "$(esc "$lu")" "$up" "$memtot" "$memav" \
+    tg=0; grep -q '^TG_TOKEN="..' /opt/etc/mihomo/ui.conf 2>/dev/null && tg=1
+    printf '{"mihomo":%s,"vpn":%s,"video":%s,"social":%s,"zapret":%s,"tg":%s,"nodes":%s,"last":"%s","uptime":%s,"memtotal":%s,"memavail":%s,"node":"%s","country":"%s","delay":"%s","mup":%s,"dl":%s,"ul":%s}\n' \
+      "$mihomo_up" "$vpn_on" "$video_on" "$social_on" "$zapret_up" "$tg" "$nodes" "$(esc "$lu")" "$up" "$memtot" "$memav" \
       "$(esc "$node")" "$(esc "$country")" "$(esc "$delay")" "$mup" "$dl" "$ul"
     ;;
 
@@ -158,6 +159,14 @@ try:
 except Exception:
     print('{\"total\":0,\"devices\":[],\"domains\":[]}')
     raise SystemExit
+names = {}
+try:
+    for line in open('/opt/etc/mihomo/device-names.txt', encoding='utf-8'):
+        if '|' in line:
+            k, v = line.rstrip('\n').split('|', 1)
+            names[k.strip()] = v.strip()
+except Exception:
+    pass
 c = d.get('connections') or []
 dev = collections.Counter(); dom = collections.Counter(); dl = collections.Counter()
 for x in c:
@@ -170,7 +179,7 @@ out = {
   'total': len(c),
   'up': d.get('uploadTotal', 0),
   'down': d.get('downloadTotal', 0),
-  'devices': [{'ip': k, 'n': v, 'dl': dl[k]} for k, v in dev.most_common(10)],
+  'devices': [{'ip': k, 'name': names.get(k, ''), 'n': v, 'dl': dl[k]} for k, v in dev.most_common(10)],
   'domains': [{'host': k, 'n': v} for k, v in dom.most_common(12)],
 }
 print(json.dumps(out, ensure_ascii=False))
@@ -179,6 +188,102 @@ print(json.dumps(out, ensure_ascii=False))
       printf '{"total":0,"devices":[],"domains":[]}\n'
     fi
     ;;
+
+  myip)
+    printf 'Content-Type: application/json\n\n'
+    R=""
+    for U in "https://ifconfig.co/json" "https://api.myip.com" "https://ipinfo.io/json"; do
+      R=$(/opt/bin/curl -s --max-time 10 --proxy "http://127.0.0.1:7890" "$U" 2>/dev/null)
+      case "$R" in
+        *rate*l*mit*|*429*|"") R="" ;;
+        \{*) break ;;
+        *) R="" ;;
+      esac
+    done
+    if [ -n "$R" ]; then printf '%s\n' "$R"; else printf '{"error":"сервисы не ответили"}\n'; fi
+    ;;
+
+  add_rule)
+    host=$(printf '%s' "$q" | sed -n 's/.*host=\([^&]*\).*/\1/p' | sed 's/%2E/./g;s/%2F/\//g')
+    pol=$(printf '%s' "$q" | sed -n 's/.*policy=\([a-z]*\).*/\1/p')
+    [ -z "$host" ] && { printf 'Content-Type: application/json\n\n{"ok":false,"error":"нет host"}\n'; exit 0; }
+    case "$pol" in proxy|direct|reject) ;; *) pol=proxy ;; esac
+    case "$pol" in
+      proxy)
+        grep -q "DOMAIN-SUFFIX,$host\$" "$RULES" 2>/dev/null || \
+          sed -i "s|^  # === SOCIAL-BEGIN ===|  - DOMAIN-SUFFIX,$host\n\n  # === SOCIAL-BEGIN ===|" "$RULES"
+        ;;
+      direct|reject)
+        UP=$(echo "$pol" | tr 'a-z' 'A-Z')
+        for f in /opt/etc/mihomo/config.yaml /opt/etc/mihomo/template.yaml; do
+          [ -f "$f" ] || continue
+          grep -q "DOMAIN-SUFFIX,$host,$UP" "$f" || \
+            sed -i "s|^rules:|rules:\n  - DOMAIN-SUFFIX,$host,$UP|" "$f"
+        done
+        ;;
+    esac
+    restart_bg
+    printf 'Content-Type: application/json\n\n{"ok":true,"host":"%s","policy":"%s"}\n' "$host" "$pol"
+    ;;
+
+  rename_device)
+    ip=$(printf '%s' "$q" | sed -n 's/.*ip=\([0-9.]*\).*/\1/p')
+    nm=$(printf '%s' "$q" | sed -n 's/.*name=\([^&]*\).*/\1/p' | sed 's/%20/ /g;s/+/ /g')
+    CN=/opt/etc/mihomo/device-names.txt
+    [ -z "$ip" ] && { printf 'Content-Type: application/json\n\n{"ok":false}\n'; exit 0; }
+    touch "$CN"
+    grep -v "^$ip|" "$CN" > "$CN.tmp" 2>/dev/null; mv "$CN.tmp" "$CN" 2>/dev/null
+    [ -n "$nm" ] && echo "$ip|$nm" >> "$CN"
+    printf 'Content-Type: application/json\n\n{"ok":true}\n'
+    ;;
+
+  backups)
+    printf 'Content-Type: application/json\n\n{"items":['
+    first=1
+    for d in /storage/mihomo-backup/*/; do
+      [ -d "$d" ] || continue
+      n=$(basename "$d")
+      sz=$(du -sk "$d" 2>/dev/null | awk '{print $1}')
+      ts=$(stat -c %Y "$d" 2>/dev/null)
+      [ $first -eq 0 ] && printf ','
+      first=0
+      printf '{"name":"%s","kb":%s,"ts":%s}' "$n" "${sz:-0}" "${ts:-0}"
+    done
+    printf ']}\n'
+    ;;
+
+  restore)
+    d=$(printf '%s' "$q" | sed -n 's/.*dir=\([0-9]*\).*/\1/p')
+    B="/storage/mihomo-backup/$d"
+    if [ -n "$d" ] && [ -d "$B" ]; then
+      cp -f "$B"/* /opt/etc/mihomo/ 2>/dev/null
+      chmod +x /opt/etc/mihomo/*.sh 2>/dev/null
+      restart_bg
+      printf 'Content-Type: application/json\n\n{"ok":true}\n'
+    else
+      printf 'Content-Type: application/json\n\n{"ok":false,"error":"нет такой копии"}\n'
+    fi
+    ;;
+
+  history)
+    HIST=/opt/etc/mihomo/delay_history
+    printf 'Content-Type: application/json\n\n{"points":['
+    tail -n 60 "$HIST" 2>/dev/null | awk -F'|' 'BEGIN{f=1} NF==2 {printf "%s[%s,%s]", (f?"":","), $1, $2; f=0}'
+    printf ']}\n'
+    ;;
+
+  traffic_daily)
+    F=/opt/etc/mihomo/traffic_daily.csv
+    printf 'Content-Type: application/json\n\n{"rows":['
+    tail -n 30 "$F" 2>/dev/null | awk -F',' 'BEGIN{f=1} NF==3 {printf "%s[\"%s\",%s,%s]", (f?"":","), $1, $2, $3; f=0}'
+    printf ']}\n'
+    ;;
+
+  notify_test)
+    /bin/sh /opt/etc/mihomo/notify.sh "NetRules: тестовое уведомление ✅"
+    printf 'Content-Type: application/json\n\n{"ok":true}\n'
+    ;;
+
   nodecheck)
     /bin/sh /opt/etc/mihomo/checkall.sh >/dev/null 2>&1
     mup=0

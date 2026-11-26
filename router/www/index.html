@@ -92,7 +92,8 @@ body.light footer{color:#7b8aa3}
 body.light .toast{background:#fff;border-color:rgba(79,140,255,.35);color:#12203a}
 .iconbtn{width:38px;height:38px;border-radius:11px;padding:0;font-size:16px;display:grid;place-items:center;background:var(--card);border:1px solid var(--line);cursor:pointer}
 .card{position:relative}
-#spark{position:absolute;left:16px;right:16px;bottom:10px;width:auto;height:26px;opacity:.85;pointer-events:none}.card{transition:transform .25s,border-color .25s,box-shadow .25s}
+#spark{position:absolute;left:16px;right:16px;bottom:10px;width:auto;height:26px;opacity:.85;pointer-events:none}
+#delaychart{position:absolute;left:16px;right:16px;bottom:10px;width:auto;height:24px;opacity:.85;pointer-events:none}.card{transition:transform .25s,border-color .25s,box-shadow .25s}
 .card:hover{transform:translateY(-2px);border-color:rgba(79,140,255,.3);box-shadow:0 12px 30px rgba(0,0,0,.35)}
 @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(52,211,153,.45)}50%{box-shadow:0 0 0 6px rgba(52,211,153,0)}}
 .dot.on{animation:pulse 2.4s ease-out infinite}
@@ -151,6 +152,7 @@ section{animation:fade .35s ease}
     <button data-view="overview" class="active">Обзор</button>
     <button data-view="speed">Скорость</button>
     <button data-view="net">Сеть</button>
+    <button data-view="service">Сервис</button>
     <button data-view="rules">Правила</button>
     <button data-view="logs">Логи</button>
   </nav>
@@ -161,7 +163,7 @@ section{animation:fade .35s ease}
       <div class="card"><div class="k">Аптайм роутера</div><div class="v" id="v-uptime">—</div><div class="h">с последней перезагрузки</div></div>
       <div class="card"><div class="k">RAM</div><div class="v" id="v-mem">—</div><div class="h" id="v-memt">—</div></div>
       <div class="card"><div class="k">Узлы VPN</div><div class="v" id="v-nodes">—</div><div class="h" id="v-health">—</div></div>
-      <div class="card"><div class="k">Текущий узел</div><div class="v" id="v-delay">—</div><div class="h" id="v-node">—</div></div>
+      <div class="card"><div class="k">Текущий узел</div><div class="v" id="v-delay">—</div><div class="h" id="v-node">—</div><canvas id="delaychart" width="240" height="30"></canvas></div>
       <div class="card"><div class="k">Трафик VPN</div><div class="v" id="v-dl">—</div><div class="h" id="v-ul">—</div><canvas id="spark" width="240" height="34"></canvas></div>
       <div class="card"><div class="k">Обновление</div><div class="v" id="v-last" style="font-size:15px;margin-top:8px">—</div><div class="h" id="v-last2">подписки</div></div>
     </div>
@@ -221,14 +223,52 @@ section{animation:fade .35s ease}
     <div class="card" style="margin-bottom:14px">
       <div class="health">
         <div><div class="big" id="net-total">—</div><div class="lbl">активных соединений</div></div>
-        <div style="margin-left:auto;text-align:right"><div class="lbl" id="net-time">обновляется каждые 5 секунд</div></div>
+        <div style="margin-left:auto;text-align:right">
+          <div class="lbl" id="net-time">обновляется каждые 5 секунд</div>
+          <div class="acts" style="margin:8px 0 0"><button id="btn-myip" onclick="myIp()">Мой IP снаружи</button></div>
+        </div>
       </div>
+      <div id="myip-box" class="srow" style="display:none"></div>
     </div>
     <div class="col">
-      <div class="card"><div class="k" style="margin-bottom:8px">Устройства</div><div id="net-devices"><div class="srow"><span class="nm">—</span></div></div></div>
-      <div class="card"><div class="k" style="margin-bottom:8px">Домены</div><div id="net-domains"><div class="srow"><span class="nm">—</span></div></div></div>
+      <div class="card"><div class="k" style="margin-bottom:8px">Устройства <span style="text-transform:none;color:#5f6d85">— клик по имени, чтобы переименовать</span></div><div id="net-devices"><div class="srow"><span class="nm">—</span></div></div></div>
+      <div class="card"><div class="k" style="margin-bottom:8px">Домены <span style="text-transform:none;color:#5f6d85">— клик, чтобы задать правило</span></div><div id="net-domains"><div class="srow"><span class="nm">—</span></div></div></div>
     </div>
   </section>
+
+  <!-- СЕРВИС -->
+  <section id="view-service" class="hidden">
+    <div class="col">
+      <div class="card">
+        <div class="k" style="margin-bottom:8px">Бэкапы конфигов</div>
+        <div id="bk-list"><div class="srow"><span class="nm">загрузка…</span></div></div>
+      </div>
+      <div class="card">
+        <div class="k" style="margin-bottom:8px">Трафик по дням</div>
+        <div id="td-list"><div class="srow"><span class="nm">пока нет данных — срез делается в 23:50</span></div></div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:14px">
+      <div class="k" style="margin-bottom:8px">Уведомления в Telegram</div>
+      <div class="srow"><span class="nm" id="tg-state">проверяю…</span><button onclick="tgTest()" style="padding:6px 12px;font-size:12px">Тест</button></div>
+      <div class="h" style="margin-top:8px;white-space:normal">Чтобы включить, добавьте в <code>/opt/etc/mihomo/ui.conf</code> строки<br><code>TG_TOKEN="токен бота"</code> и <code>TG_CHAT="ваш chat id"</code></div>
+    </div>
+  </section>
+
+  <!-- МОДАЛКА ПРАВИЛА -->
+  <div id="rule-modal" style="display:none;position:fixed;inset:0;background:rgba(4,8,16,.72);z-index:20;place-items:center">
+    <div class="card" style="max-width:440px;width:92%;padding:22px">
+      <div class="k">Правило для домена</div>
+      <div style="margin:8px 0 16px;font-size:15px;word-break:break-all" id="rm-host">—</div>
+      <div class="acts" style="margin:0">
+        <button class="primary" onclick="applyRule('proxy')">Через VPN</button>
+        <button onclick="applyRule('direct')">Напрямую</button>
+        <button onclick="applyRule('reject')">Блокировать</button>
+        <button onclick="closeRule()">Отмена</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ПРАВИЛА -->
   <section id="view-rules" class="hidden">
     <textarea id="rules" spellcheck="false" placeholder="загрузка…"></textarea>
@@ -266,7 +306,7 @@ function dot(id,on){$(id).className='dot '+(on?'on':'off');}
 var view='overview';
 function show(v){
   view=v;
-  ['overview','speed','net','rules','logs'].forEach(function(x){
+  ['overview','speed','net','service','rules','logs'].forEach(function(x){
     $('#view-'+x).classList.toggle('hidden', x!==v);
   });
   Array.prototype.forEach.call(document.querySelectorAll('nav button'),function(b){
@@ -277,6 +317,7 @@ function show(v){
   if(v==='logs') loadLog();
   if(v==='speed'){ loadHealth(); loadSpeed(); }
   if(v==='net') loadNet();
+  if(v==='service') loadService();
 }
 Array.prototype.forEach.call(document.querySelectorAll('nav button'),function(b){
   b.addEventListener('click',function(){ show(b.getAttribute('data-view')); });
@@ -327,16 +368,16 @@ function loadNet(){
     $('#net-total').textContent=d.total||0;
     $('#net-time').textContent='обновлено '+new Date().toLocaleTimeString('ru-RU');
     var dv=(d.devices||[]).map(function(x){
-      return '<div class="srow"><span class="nm">'+x.ip+'</span><span>'+x.n+' соед · '+fb(x.dl)+'</span></div>';
+      var label=x.name?x.name:x.ip;
+      return '<div class="srow"><span class="nm" style="cursor:pointer" onclick="renameDevice(\''+x.ip+'\',\''+(x.name||'').replace(/'/g,'')+'\')" title="'+x.ip+'">'+label+'</span><span>'+x.n+' соед · '+fb(x.dl)+'</span></div>';
     }).join('')||'<div class="srow"><span class="nm">нет соединений</span></div>';
     $('#net-devices').innerHTML=dv;
     var dm=(d.domains||[]).map(function(x){
-      return '<div class="srow"><span class="nm">'+x.host+'</span><span>'+x.n+'</span></div>';
+      return '<div class="srow"><span class="nm" style="cursor:pointer" onclick="openRule(\''+x.host+'\')">'+x.host+'</span><span>'+x.n+'</span></div>';
     }).join('')||'<div class="srow"><span class="nm">нет соединений</span></div>';
     $('#net-domains').innerHTML=dm;
   }).catch(function(){});
-}
-function applyTheme(t){
+}function applyTheme(t){
   document.body.classList.toggle('light',t==='light');
   var b=$('#theme-btn'); if(b) b.textContent=(t==='light')?'🌙':'☀';
   try{localStorage.setItem('nr-theme',t);}catch(e){}
@@ -355,6 +396,7 @@ function refresh(){
     animNum($('#v-dl'),s.dl,fb);
     $('#v-ul').textContent='отдано '+fb(s.ul)+' · за '+fmtUp(s.mup);
     updateSpark(s.dl,s.ul);
+    loadHistory();
     var last='—',sub='подписки';
     if(s.last&&s.last.length){
       var p=s.last.split('|');
@@ -450,6 +492,96 @@ Array.prototype.forEach.call(document.querySelectorAll('.tab2'),function(t){
     t.classList.add('active');logFile=t.getAttribute('data-f');loadLog();
   });
 });
+
+var ruleHost='';
+function myIp(){
+  var b=$('#btn-myip'), box=$('#myip-box');
+  b.disabled=true;b.textContent='Спрашиваю…';
+  api('action=myip').then(function(d){
+    b.disabled=false;b.textContent='Мой IP снаружи';box.style.display='flex';
+    if(d&&d.ip){
+      var loc=[d.country||d.country_code||'', d.city||d.city||''].filter(Boolean).join(', ');
+      var org=d.org||d.asn_org||d.company||'';
+      box.innerHTML='<span class="nm">'+d.ip+'</span><span>'+loc+(org?' · '+org:'')+'</span>';
+    } else {
+      box.innerHTML='<span class="nm">не удалось узнать</span>';
+    }
+  }).catch(function(){b.disabled=false;b.textContent='Мой IP снаружи';});
+}
+function renameDevice(ip,cur){
+  var n=window.prompt('Имя для '+ip, cur||'');
+  if(n===null) return;
+  api('action=rename_device&ip='+encodeURIComponent(ip)+'&name='+encodeURIComponent(n)).then(function(){ loadNet(); });
+}
+function openRule(host){
+  ruleHost=host;
+  $('#rm-host').textContent=host;
+  $('#rule-modal').style.display='grid';
+}
+function closeRule(){ $('#rule-modal').style.display='none'; }
+function applyRule(policy){
+  var h=ruleHost; closeRule();
+  if(!h) return;
+  api('action=add_rule&host='+encodeURIComponent(h)+'&policy='+policy).then(function(d){
+    toast(d&&d.ok?('Правило: '+h+' → '+policy):'не удалось');
+  }).catch(function(){toast('ошибка');});
+}
+function loadBackups(){
+  var box=$('#bk-list');
+  api('action=backups').then(function(d){
+    var items=(d&&d.items)||[];
+    if(!items.length){ box.innerHTML='<div class="srow"><span class="nm">копий пока нет</span></div>'; return; }
+    box.innerHTML=items.sort(function(a,b){return (b.name||'').localeCompare(a.name||'');}).map(function(x){
+      var dt=x.name.replace(/(\d{4})(\d{2})(\d{2})/,'$3.$2.$1');
+      return '<div class="srow"><span class="nm">'+dt+' · '+Math.round((x.kb||0))+' КБ</span><button onclick="restoreBackup(\''+x.name+'\')" style="padding:5px 10px;font-size:12px">Восстановить</button></div>';
+    }).join('');
+  }).catch(function(){});
+}
+function restoreBackup(name){
+  if(!window.confirm('Восстановить копию '+name+'? Текущие конфиги будут заменены.')) return;
+  api('action=restore&dir='+encodeURIComponent(name)).then(function(d){
+    toast(d&&d.ok?'Восстановлено, mihomo перезапускается':'не удалось');
+    setTimeout(loadBackups,2000);
+  });
+}
+function loadTrafficDaily(){
+  var box=$('#td-list');
+  api('action=traffic_daily').then(function(d){
+    var rows=(d&&d.rows)||[];
+    if(!rows.length){ box.innerHTML='<div class="srow"><span class="nm">пока нет данных — срез делается в 23:50</span></div>'; return; }
+    var max=1; rows.forEach(function(r){ if((r[1]+r[2])>max) max=r[1]+r[2]; });
+    box.innerHTML=rows.slice(-10).map(function(r){
+      var total=r[1]+r[2], pct=Math.max(3,Math.round(total/max*100));
+      return '<div class="srow" style="display:block"><div style="display:flex;justify-content:space-between"><span class="nm">'+r[0]+'</span><span>'+fb(r[1])+' ↓ / '+fb(r[2])+' ↑</span></div><div style="height:5px;border-radius:3px;background:rgba(79,140,255,.15);margin-top:6px"><div style="height:5px;border-radius:3px;width:'+pct+'%;background:linear-gradient(90deg,#4f8cff,#22d3ee)"></div></div></div>';
+    }).join('');
+  }).catch(function(){});
+}
+function tgTest(){
+  api('action=notify_test').then(function(){ toast('Если токен задан — сообщение ушло'); });
+}
+function loadTgState(){
+  api('action=status').then(function(s){
+    $('#tg-state').textContent=s&&s.tg?'подключён':'не настроен';
+  }).catch(function(){});
+}
+function loadService(){ loadBackups(); loadTrafficDaily(); loadTgState(); }
+function loadHistory(){
+  api('action=history').then(function(d){
+    var c=$('#delaychart'); if(!c||!c.getContext) return;
+    var pts=(d&&d.points)||[], ctx=c.getContext('2d'), w=c.width, h=c.height;
+    ctx.clearRect(0,0,w,h);
+    if(pts.length<2) return;
+    var max=1; pts.forEach(function(p){ if(p[1]>max) max=p[1]; });
+    ctx.beginPath(); ctx.strokeStyle='rgba(34,211,238,.9)'; ctx.lineWidth=1.6; ctx.lineJoin='round';
+    pts.forEach(function(p,i){
+      var x=i*(w/Math.max(1,pts.length-1)), y=h-2-(p[1]/max)*(h-6);
+      i?ctx.lineTo(x,y):ctx.moveTo(x,y);
+    });
+    ctx.stroke();
+    ctx.fillStyle='rgba(34,211,238,.10)';
+    ctx.lineTo(w,h); ctx.lineTo(0,h); ctx.closePath(); ctx.fill();
+  }).catch(function(){});
+}
 
 show((location.hash||'#overview').slice(1));
 applyTheme((function(){try{return localStorage.getItem('nr-theme')||'dark';}catch(e){return 'dark';}})());

@@ -30,6 +30,7 @@ check_pinned() {
       /opt/bin/curl -s -o /dev/null --max-time 8 -X PUT -H "$AUTH" -H "Content-Type: application/json" \
         -d '{"name":"AUTO"}' http://127.0.0.1:9090/proxies/PROXY 2>/dev/null
       echo "$(date '+%F %T') узел умер — вернул авто-выбор по пингу (AUTO)" >> $LOG
+      /bin/sh /opt/etc/mihomo/notify.sh "NetRules: узел $NOW не отвечает, вернул авто-выбор" >/dev/null 2>&1 &
       ( /opt/etc/mihomo/speedtest.sh >/dev/null 2>&1 & )
       pinfails=0
     fi
@@ -58,9 +59,11 @@ while true; do
         restarts=$((restarts+1))
         if [ "$restarts" -le 3 ]; then
           echo "$(date '+%F %T') похоже завис, перезапуск ($restarts за час)" >> $LOG
+          /bin/sh /opt/etc/mihomo/notify.sh "NetRules: mihomo завис, перезапуск #$restarts" >/dev/null 2>&1 &
           /opt/etc/init.d/S99mihomo restart >> $LOG 2>&1
         else
           echo "$(date '+%F %T') лимит перезапусков исчерпан — снимаю правила, нужен разбор" >> $LOG
+          /bin/sh /opt/etc/mihomo/notify.sh "NetRules: mihomo не поднимается, правила сняты — нужен разбор" >/dev/null 2>&1 &
           /opt/etc/mihomo/rules.sh clear
           restarts=0; window=$now
         fi

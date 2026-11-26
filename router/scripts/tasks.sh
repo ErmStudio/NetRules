@@ -3,6 +3,9 @@ PATH=/opt/bin:/opt/sbin:/bin:/sbin:/usr/bin:/usr/sbin
 BASE=/opt/etc/mihomo
 LOG=/opt/var/log/mihomo-tasks.log
 PIDF=/opt/var/run/mihomo-tasks.pid
+[ -f /opt/etc/mihomo/ui.conf ] && . /opt/etc/mihomo/ui.conf
+MIHOMO_API="${MIHOMO_API:-http://127.0.0.1:9090}"
+MIHOMO_SECRET="${MIHOMO_SECRET:-change-me}"
 echo $$ > $PIDF
 
 while true; do
@@ -10,6 +13,29 @@ while true; do
   HN=$(echo $H | sed "s/^0//")
   D=$(date +%d%m%Y)
   W=$(date +%w)
+
+  # каждый час — точка истории задержки
+  HM2=$(date +%Y%m%d%H)
+  if [ "$HM2" != "$(cat $BASE/.last_hist 2>/dev/null)" ]; then
+    echo "$HM2" > $BASE/.last_hist
+    /opt/etc/mihomo/delayhist.sh
+  fi
+  # 23:50 — дневной срез трафика
+  if [ "$H" = "23" ] && [ "$D" != "$(cat $BASE/.last_traffic 2>/dev/null)" ]; then
+    echo "$D" > $BASE/.last_traffic
+    C=$(/opt/bin/curl -s --max-time 6 -H "Authorization: Bearer $MIHOMO_SECRET" "$MIHOMO_API/connections" 2>/dev/null)
+    DL=$(printf "%s" "$C" | sed -n "s/.*\"downloadTotal\":\\([0-9]*\\).*/\\1/p" | head -1)
+    UL=$(printf "%s" "$C" | sed -n "s/.*\"uploadTotal\":\\([0-9]*\\).*/\\1/p" | head -1)
+    [ -z "$DL" ] && DL=0
+    [ -z "$UL" ] && UL=0
+    PREV=$(cat $BASE/.traffic_last 2>/dev/null)
+    PDL=0; PUL=0
+    if [ -n "$PREV" ]; then PDL=${PREV%|*}; PUL=${PREV#*|}; fi
+    DDL=$((DL - PDL)); [ "$DDL" -lt 0 ] && DDL=$DL
+    DUL=$((UL - PUL)); [ "$DUL" -lt 0 ] && DUL=$UL
+    echo "$(date +%F),$DDL,$DUL" >> $BASE/traffic_daily.csv
+    echo "$DL|$UL" > $BASE/.traffic_last
+  fi
 
   # 06:00 ежедневно — обновление подписки
   if [ "$H" = "06" ] && [ "$D" != "$(cat $BASE/.last_sub 2>/dev/null)" ]; then
