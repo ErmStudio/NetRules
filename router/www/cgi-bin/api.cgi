@@ -34,7 +34,7 @@ memav=$(awk '/MemAvailable/{print $2}' /proc/meminfo 2>/dev/null)
 restart_bg() { ( /opt/etc/init.d/S99mihomo restart >/dev/null 2>&1 & ); }
 select_node() {
   /opt/bin/curl -s -o /dev/null --max-time 8 -X PUT \
-    -H "Authorization: Bearer dshsecret" -H "Content-Type: application/json" \
+    -H "$AUTH" -H "Content-Type: application/json" \
     -d "{\"name\":\"$1\"}" "$API/proxies/PROXY" 2>/dev/null
 }
 
