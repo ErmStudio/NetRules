@@ -4,7 +4,7 @@
 PATH=/opt/bin:/opt/sbin:/bin:/sbin:/usr/bin:/usr/sbin
 [ -f /opt/etc/mihomo/ui.conf ] && . /opt/etc/mihomo/ui.conf
 API="${MIHOMO_API:-http://127.0.0.1:9090}"
-SECRET="${MIHOMO_SECRET:-dshsecret}"
+SECRET="${MIHOMO_SECRET:-change-me}"
 AUTH="Authorization: Bearer $SECRET"
 SPEEDURL="https://speed.cloudflare.com/__down?bytes=2000000"
 OUT=/opt/etc/mihomo/speedtest.json
@@ -14,7 +14,7 @@ TMP=/tmp/mh-speed.txt
 
 sel() {
   /opt/bin/curl -s -o /dev/null --max-time 8 -X PUT \
-    -H "Authorization: Bearer dshsecret" -H "Content-Type: application/json" \
+    -H "Authorization: Bearer $SECRET" -H "Content-Type: application/json" \
     -d "{\"name\":\"$1\"}" "$API/proxies/PROXY" 2>/dev/null
 }
 

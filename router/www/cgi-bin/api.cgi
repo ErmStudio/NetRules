@@ -5,8 +5,10 @@ RULES=/opt/etc/mihomo/rules-proxy.yaml
 CFG=/opt/etc/mihomo/config.yaml
 STATUS=/opt/etc/mihomo/last_update.txt
 LOGDIR=/opt/var/log
-API="http://127.0.0.1:9090"
-AUTH="Authorization: Bearer dshsecret"
+[ -f /opt/etc/mihomo/ui.conf ] && . /opt/etc/mihomo/ui.conf
+API="${MIHOMO_API:-http://127.0.0.1:9090}"
+SECRET="${MIHOMO_SECRET:-change-me}"
+AUTH="Authorization: Bearer $SECRET"
 SPEEDURL="https://speed.cloudflare.com/__down?bytes=2000000"
 
 esc() {

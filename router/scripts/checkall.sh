@@ -3,7 +3,7 @@
 PATH=/opt/bin:/opt/sbin:/bin:/sbin:/usr/bin:/usr/sbin
 [ -f /opt/etc/mihomo/ui.conf ] && . /opt/etc/mihomo/ui.conf
 API="${MIHOMO_API:-http://127.0.0.1:9090}"
-SECRET="${MIHOMO_SECRET:-dshsecret}"
+SECRET="${MIHOMO_SECRET:-change-me}"
 AUTH="Authorization: Bearer $SECRET"
 OUT=/opt/etc/mihomo/nodes_health.json
 CT=/opt/etc/mihomo/countries.txt
