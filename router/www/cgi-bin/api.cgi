@@ -5,10 +5,8 @@ RULES=/opt/etc/mihomo/rules-proxy.yaml
 CFG=/opt/etc/mihomo/config.yaml
 STATUS=/opt/etc/mihomo/last_update.txt
 LOGDIR=/opt/var/log
-[ -f /opt/etc/mihomo/ui.conf ] && . /opt/etc/mihomo/ui.conf
-API="${MIHOMO_API:-http://127.0.0.1:9090}"
-SECRET="${MIHOMO_SECRET:-change-me}"
-AUTH="Authorization: Bearer $SECRET"
+API="http://127.0.0.1:9090"
+AUTH="Authorization: Bearer dshsecret"
 SPEEDURL="https://speed.cloudflare.com/__down?bytes=2000000"
 
 esc() {
@@ -34,7 +32,7 @@ memav=$(awk '/MemAvailable/{print $2}' /proc/meminfo 2>/dev/null)
 restart_bg() { ( /opt/etc/init.d/S99mihomo restart >/dev/null 2>&1 & ); }
 select_node() {
   /opt/bin/curl -s -o /dev/null --max-time 8 -X PUT \
-    -H "$AUTH" -H "Content-Type: application/json" \
+    -H "Authorization: Bearer dshsecret" -H "Content-Type: application/json" \
     -d "{\"name\":\"$1\"}" "$API/proxies/PROXY" 2>/dev/null
 }
 
@@ -150,6 +148,37 @@ case "$act" in
     cat /opt/etc/mihomo/speedtest.json 2>/dev/null || printf '{"ok":false}\n'
     ;;
 
+  conns)
+    printf 'Content-Type: application/json\n\n'
+    if [ "$mihomo_up" = "1" ]; then
+      /opt/bin/curl -s --max-time 8 -H "$AUTH" "$API/connections" 2>/dev/null | /opt/bin/python3 -c "
+import sys, json, collections
+try:
+    d = json.load(sys.stdin)
+except Exception:
+    print('{\"total\":0,\"devices\":[],\"domains\":[]}')
+    raise SystemExit
+c = d.get('connections') or []
+dev = collections.Counter(); dom = collections.Counter(); dl = collections.Counter()
+for x in c:
+    m = x.get('metadata') or {}
+    ip = m.get('sourceIP') or '?'
+    h = m.get('host') or m.get('sniffHost') or m.get('destinationIP') or '?'
+    dev[ip] += 1; dom[h] += 1
+    dl[ip] += (x.get('download') or 0)
+out = {
+  'total': len(c),
+  'up': d.get('uploadTotal', 0),
+  'down': d.get('downloadTotal', 0),
+  'devices': [{'ip': k, 'n': v, 'dl': dl[k]} for k, v in dev.most_common(10)],
+  'domains': [{'host': k, 'n': v} for k, v in dom.most_common(12)],
+}
+print(json.dumps(out, ensure_ascii=False))
+"
+    else
+      printf '{"total":0,"devices":[],"domains":[]}\n'
+    fi
+    ;;
   nodecheck)
     /bin/sh /opt/etc/mihomo/checkall.sh >/dev/null 2>&1
     mup=0
