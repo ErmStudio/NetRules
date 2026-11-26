@@ -5,10 +5,8 @@ RULES=/opt/etc/mihomo/rules-proxy.yaml
 CFG=/opt/etc/mihomo/config.yaml
 STATUS=/opt/etc/mihomo/last_update.txt
 LOGDIR=/opt/var/log
-[ -f /opt/etc/mihomo/ui.conf ] && . /opt/etc/mihomo/ui.conf
-API="${MIHOMO_API:-http://127.0.0.1:9090}"
-SECRET="${MIHOMO_SECRET:-dshsecret}"
-AUTH="Authorization: Bearer $SECRET"
+API="http://127.0.0.1:9090"
+AUTH="Authorization: Bearer dshsecret"
 SPEEDURL="https://speed.cloudflare.com/__down?bytes=2000000"
 
 esc() {
@@ -59,13 +57,31 @@ case "$act" in
       [ -z "$dl" ] && dl=0
       [ -z "$ul" ] && ul=0
     fi
+    mup=0
+    if [ "$mihomo_up" = "1" ]; then
+      MP=$(ps 2>/dev/null | grep '[m]ihomo -d' | awk '{print $1}' | head -1)
+      if [ -n "$MP" ] && [ -r "/proc/$MP/stat" ]; then
+        ST=$(awk '{print $22}' /proc/$MP/stat 2>/dev/null)
+        UP=$(awk '{print int($1)}' /proc/uptime 2>/dev/null)
+        [ -n "$ST" ] && mup=$((UP - ST/100))
+      fi
+    fi
     printf 'Content-Type: application/json\n\n'
-    printf '{"mihomo":%s,"vpn":%s,"video":%s,"social":%s,"zapret":%s,"nodes":%s,"last":"%s","uptime":%s,"memtotal":%s,"memavail":%s,"node":"%s","country":"%s","delay":"%s","dl":%s,"ul":%s}\n' \
+    printf '{"mihomo":%s,"vpn":%s,"video":%s,"social":%s,"zapret":%s,"nodes":%s,"last":"%s","uptime":%s,"memtotal":%s,"memavail":%s,"node":"%s","country":"%s","delay":"%s","mup":%s,"dl":%s,"ul":%s}\n' \
       "$mihomo_up" "$vpn_on" "$video_on" "$social_on" "$zapret_up" "$nodes" "$(esc "$lu")" "$up" "$memtot" "$memav" \
-      "$(esc "$node")" "$(esc "$country")" "$(esc "$delay")" "$dl" "$ul"
+      "$(esc "$node")" "$(esc "$country")" "$(esc "$delay")" "$mup" "$dl" "$ul"
     ;;
 
   rules_get)
+    mup=0
+    if [ "$mihomo_up" = "1" ]; then
+      MP=$(ps 2>/dev/null | grep '[m]ihomo -d' | awk '{print $1}' | head -1)
+      if [ -n "$MP" ] && [ -r "/proc/$MP/stat" ]; then
+        ST=$(awk '{print $22}' /proc/$MP/stat 2>/dev/null)
+        UP=$(awk '{print int($1)}' /proc/uptime 2>/dev/null)
+        [ -n "$ST" ] && mup=$((UP - ST/100))
+      fi
+    fi
     printf 'Content-Type: application/json\n\n'
     printf '{"rules":%s}\n' "$(jstr "$(cat "$RULES" 2>/dev/null)")"
     ;;
@@ -119,21 +135,57 @@ case "$act" in
 
   speedtest)
     /bin/sh /opt/etc/mihomo/speedtest.sh >/dev/null 2>&1
+    mup=0
+    if [ "$mihomo_up" = "1" ]; then
+      MP=$(ps 2>/dev/null | grep '[m]ihomo -d' | awk '{print $1}' | head -1)
+      if [ -n "$MP" ] && [ -r "/proc/$MP/stat" ]; then
+        ST=$(awk '{print $22}' /proc/$MP/stat 2>/dev/null)
+        UP=$(awk '{print int($1)}' /proc/uptime 2>/dev/null)
+        [ -n "$ST" ] && mup=$((UP - ST/100))
+      fi
+    fi
     printf 'Content-Type: application/json\n\n'
     cat /opt/etc/mihomo/speedtest.json 2>/dev/null || printf '{"ok":false}\n'
     ;;
 
   nodecheck)
     /bin/sh /opt/etc/mihomo/checkall.sh >/dev/null 2>&1
+    mup=0
+    if [ "$mihomo_up" = "1" ]; then
+      MP=$(ps 2>/dev/null | grep '[m]ihomo -d' | awk '{print $1}' | head -1)
+      if [ -n "$MP" ] && [ -r "/proc/$MP/stat" ]; then
+        ST=$(awk '{print $22}' /proc/$MP/stat 2>/dev/null)
+        UP=$(awk '{print int($1)}' /proc/uptime 2>/dev/null)
+        [ -n "$ST" ] && mup=$((UP - ST/100))
+      fi
+    fi
     printf 'Content-Type: application/json\n\n'
     cat /opt/etc/mihomo/nodes_health.json 2>/dev/null || printf '{"ok":false}\n'
     ;;
 
   health)
+    mup=0
+    if [ "$mihomo_up" = "1" ]; then
+      MP=$(ps 2>/dev/null | grep '[m]ihomo -d' | awk '{print $1}' | head -1)
+      if [ -n "$MP" ] && [ -r "/proc/$MP/stat" ]; then
+        ST=$(awk '{print $22}' /proc/$MP/stat 2>/dev/null)
+        UP=$(awk '{print int($1)}' /proc/uptime 2>/dev/null)
+        [ -n "$ST" ] && mup=$((UP - ST/100))
+      fi
+    fi
     printf 'Content-Type: application/json\n\n'
     cat /opt/etc/mihomo/nodes_health.json 2>/dev/null || printf '{"ok":false}\n'
     ;;
   speed_last)
+    mup=0
+    if [ "$mihomo_up" = "1" ]; then
+      MP=$(ps 2>/dev/null | grep '[m]ihomo -d' | awk '{print $1}' | head -1)
+      if [ -n "$MP" ] && [ -r "/proc/$MP/stat" ]; then
+        ST=$(awk '{print $22}' /proc/$MP/stat 2>/dev/null)
+        UP=$(awk '{print int($1)}' /proc/uptime 2>/dev/null)
+        [ -n "$ST" ] && mup=$((UP - ST/100))
+      fi
+    fi
     printf 'Content-Type: application/json\n\n'
     cat /opt/etc/mihomo/speedtest.json 2>/dev/null || printf '{"ok":false}\n'
     ;;
@@ -150,6 +202,15 @@ case "$act" in
       speed)    file=$LOGDIR/mihomo-speedtest.log ;;
       *)        file=$LOGDIR/mihomo.log ;;
     esac
+    mup=0
+    if [ "$mihomo_up" = "1" ]; then
+      MP=$(ps 2>/dev/null | grep '[m]ihomo -d' | awk '{print $1}' | head -1)
+      if [ -n "$MP" ] && [ -r "/proc/$MP/stat" ]; then
+        ST=$(awk '{print $22}' /proc/$MP/stat 2>/dev/null)
+        UP=$(awk '{print int($1)}' /proc/uptime 2>/dev/null)
+        [ -n "$ST" ] && mup=$((UP - ST/100))
+      fi
+    fi
     printf 'Content-Type: application/json\n\n'
     printf '{"log":%s}\n' "$(jstr "$(tail -n 60 "$file" 2>/dev/null)")"
     ;;

@@ -45,11 +45,12 @@ nav button.active{background:rgba(79,140,255,.15);color:#dbe8ff;border-color:rgb
 .sw input:checked + .sl{background:linear-gradient(135deg,var(--acc),var(--acc2));box-shadow:0 0 18px rgba(79,140,255,.5)}
 .sw input:checked + .sl:before{transform:translateX(23px);background:#08111f}
 .acts{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}
+.acts button,.acts a{min-width:170px;text-align:center}
 button{border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--txt);padding:10px 16px;border-radius:11px;font-size:13.5px;cursor:pointer;font-family:inherit;transition:.18s}
 button:hover{background:rgba(255,255,255,.1)}
 button:disabled{opacity:.55;cursor:default}
 button.primary{background:linear-gradient(135deg,var(--acc),#3b6fe0);border:0;color:#fff;box-shadow:0 8px 22px rgba(79,140,255,.28)}
-textarea{width:100%;min-height:420px;background:#080f1c;color:#cfe0ff;border:1px solid var(--line);border-radius:12px;padding:14px;font-family:ui-monospace,Consolas,monospace;font-size:13px;line-height:1.55}
+textarea{width:100%;height:calc(100vh - 330px);min-height:300px;background:#080f1c;color:#cfe0ff;border:1px solid var(--line);border-radius:12px;padding:14px;font-family:ui-monospace,Consolas,monospace;font-size:13px;line-height:1.55}
 pre{margin:0;background:#060b14;border:1px solid var(--line);border-radius:12px;padding:14px;font-family:ui-monospace,Consolas,monospace;font-size:12.5px;line-height:1.65;color:#a9bcd8;height:calc(100vh - 330px);min-height:300px;overflow:auto;white-space:pre-wrap;word-break:break-word}
 .tabs2{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
 .tab2{padding:7px 13px;border-radius:9px;font-size:12.5px;color:var(--dim);cursor:pointer;border:1px solid transparent}
@@ -121,14 +122,13 @@ footer b{color:#8ea6c9;font-weight:600}
   <!-- ОБЗОР -->
   <section id="view-overview">
     <div class="grid">
-      <div class="card"><div class="k">Аптайм</div><div class="v" id="v-uptime">—</div><div class="h">роутер</div></div>
-      <div class="card"><div class="k">Узлы</div><div class="v" id="v-nodes">—</div><div class="h" id="v-health">—</div></div>
+      <div class="card"><div class="k">Аптайм роутера</div><div class="v" id="v-uptime">—</div><div class="h">с последней перезагрузки</div></div>
       <div class="card"><div class="k">RAM</div><div class="v" id="v-mem">—</div><div class="h" id="v-memt">—</div></div>
-      <div class="card"><div class="k">Узел</div><div class="v" id="v-delay">—</div><div class="h" id="v-node">—</div></div>
-      <div class="card"><div class="k">Трафик</div><div class="v" id="v-dl">—</div><div class="h" id="v-ul">—</div></div>
+      <div class="card"><div class="k">Узлы VPN</div><div class="v" id="v-nodes">—</div><div class="h" id="v-health">—</div></div>
+      <div class="card"><div class="k">Текущий узел</div><div class="v" id="v-delay">—</div><div class="h" id="v-node">—</div></div>
+      <div class="card"><div class="k">Трафик VPN</div><div class="v" id="v-dl">—</div><div class="h" id="v-ul">—</div></div>
       <div class="card"><div class="k">Обновление</div><div class="v" id="v-last" style="font-size:15px;margin-top:8px">—</div><div class="h" id="v-last2">подписки</div></div>
     </div>
-
     <div class="col">
       <div class="card tog">
         <div><h3>VPN-прокси</h3><p>Telegram, ChatGPT и остальные заблокированные — через туннель</p></div>
@@ -150,9 +150,10 @@ footer b{color:#8ea6c9;font-weight:600}
 
     <div class="acts">
       <button class="primary" onclick="act('update')">Обновить подписку</button>
-      <button onclick="act('backup')">Бэкап сейчас</button>
+      <button onclick="act('backup')" title="Копия конфигов и скриптов в /storage/mihomo-backup/ГГГГММДД, хранится 7 копий">Бэкап сейчас</button>
       <button onclick="act('restart')">Перезапустить mihomo</button>
       <a href="http://mihomo.lan:9090/ui/metacubexd/" target="_blank" style="text-decoration:none"><button>Панель mihomo ↗</button></a>
+      <button onclick="openZapretLog()" title="У zapret нет своего веб-интерфейса — открываю его лог">Логи zapret →</button>
     </div>
   </section>
 
@@ -240,7 +241,7 @@ function refresh(){
     $('#v-delay').textContent=s.delay?(s.delay+' мс'):'—';
     $('#v-node').textContent=(s.country?(s.country+' · '):'')+(s.node||'авто');
     $('#v-dl').textContent=fb(s.dl);
-    $('#v-ul').textContent='отдано '+fb(s.ul);
+    $('#v-ul').textContent='отдано '+fb(s.ul)+' · за '+fmtUp(s.mup);
     var last='—',sub='подписки';
     if(s.last&&s.last.length){
       var p=s.last.split('|');
@@ -319,6 +320,12 @@ bindToggle('#t-video','toggle_video','Видео через VPN','Видео н�
 bindToggle('#t-zapret','toggle_zapret','Zapret включён','Zapret выключен');
 
 var logFile='mihomo';
+function setLog(f){
+  logFile=f;
+  Array.prototype.forEach.call(document.querySelectorAll('.tab2'),function(x){ x.classList.toggle('active', x.getAttribute('data-f')===f); });
+  loadLog();
+}
+function openZapretLog(){ show('logs'); setLog('zapret'); }
 function loadLog(){
   api('action=logs&f='+logFile).then(function(r){
     var el=$('#log');el.textContent=(r.log&&r.log.length)?r.log:'(пусто)';
