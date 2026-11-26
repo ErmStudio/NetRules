@@ -313,15 +313,15 @@ print(json.dumps(out, ensure_ascii=False))
     ;;
 
   nodecheck)
+    if [ "$mihomo_up" != "1" ]; then
+      printf 'Content-Type: application/json\n\n{"ok":false,"error":"mihomo не запущен"}\n'
+      exit 0
+    fi
     /bin/sh /opt/etc/mihomo/checkall.sh >/dev/null 2>&1
-    mup=0
-    if [ "$mihomo_up" = "1" ]; then
-      MP=$(ps 2>/dev/null | grep '[m]ihomo -d' | awk '{print $1}' | head -1)
-      if [ -n "$MP" ] && [ -r "/proc/$MP/stat" ]; then
-        ST=$(awk '{print $22}' /proc/$MP/stat 2>/dev/null)
-        UP=$(awk '{print int($1)}' /proc/uptime 2>/dev/null)
-        [ -n "$ST" ] && mup=$((UP - ST/100))
-      fi
+    RC=$?
+    if [ "$RC" = "2" ]; then
+      printf 'Content-Type: application/json\n\n{"ok":false,"error":"mihomo не готов, проверка отменена"}\n'
+      exit 0
     fi
     printf 'Content-Type: application/json\n\n'
     cat /opt/etc/mihomo/nodes_health.json 2>/dev/null || printf '{"ok":false}\n'

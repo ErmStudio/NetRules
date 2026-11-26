@@ -458,6 +458,7 @@ function nodeCheck(){
   var b=$('#btn-check');b.disabled=true;b.textContent='Проверяю 221 узел…';
   fetch('/cgi-bin/api.cgi?action=nodecheck',{method:'POST'}).then(function(r){return r.json();}).then(function(d){
     b.disabled=false;b.textContent='Проверить все узлы';
+    if(d && d.ok===false){ toast(d.error||'проверка отменена'); return; }
     loadHealth();
     toast('живых '+d.alive+' из '+d.total);
   }).catch(function(){b.disabled=false;b.textContent='Проверить все узлы';toast('ошибка проверки');});
