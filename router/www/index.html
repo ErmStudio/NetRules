@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>NetRules · Keenetic</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M32 3 58 17v30L32 61 6 47V17L32 3Z' fill='%230b1220' stroke='%234f8cff' stroke-width='3'/%3E%3Ccircle cx='32' cy='18' r='4.5' fill='%2322d3ee'/%3E%3Ccircle cx='19' cy='41' r='4.5' fill='%2322d3ee'/%3E%3Ccircle cx='45' cy='41' r='4.5' fill='%2322d3ee'/%3E%3Cpath d='M32 22v9M29 30l-6 7M35 30l6 7' stroke='%234f8cff' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E">
 <style>
 :root{--bg:#080c14;--card:rgba(255,255,255,.045);--line:rgba(255,255,255,.09);--txt:#e8eefc;--dim:#8b9bb8;--acc:#4f8cff;--acc2:#22d3ee;--ok:#34d399;--bad:#f87171;--warn:#fbbf24}
 *{box-sizing:border-box}
@@ -67,7 +68,21 @@ pre{margin:0;background:#060b14;border:1px solid var(--line);border-radius:12px;
 .dead{margin-top:10px;color:#8b9bb8;font-size:12px;line-height:1.7;word-break:break-all}
 footer{max-width:1060px;margin:26px auto 0;text-align:center;color:#5f6d85;font-size:12px;position:relative;z-index:1}
 footer b{color:#8ea6c9;font-weight:600}
-@media(max-width:600px){
+.aurora{position:fixed;inset:-25%;z-index:0;pointer-events:none;filter:blur(70px);opacity:.55}
+.aurora i{position:absolute;display:block;border-radius:50%;mix-blend-mode:screen;animation:drift 28s ease-in-out infinite alternate}
+.aurora i:nth-child(1){width:520px;height:520px;left:-8%;top:-12%;background:radial-gradient(circle,#1d3a7a,transparent 65%)}
+.aurora i:nth-child(2){width:460px;height:460px;right:-6%;top:4%;background:radial-gradient(circle,#0d4a52,transparent 65%);animation-delay:-9s}
+.aurora i:nth-child(3){width:620px;height:620px;left:26%;bottom:-28%;background:radial-gradient(circle,#2a1b52,transparent 65%);animation-delay:-16s}
+@keyframes drift{0%{transform:translate3d(0,0,0) scale(1)}50%{transform:translate3d(44px,-32px,0) scale(1.09)}100%{transform:translate3d(-34px,22px,0) scale(.95)}}
+.card{transition:transform .25s,border-color .25s,box-shadow .25s}
+.card:hover{transform:translateY(-2px);border-color:rgba(79,140,255,.3);box-shadow:0 12px 30px rgba(0,0,0,.35)}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(52,211,153,.45)}50%{box-shadow:0 0 0 6px rgba(52,211,153,0)}}
+.dot.on{animation:pulse 2.4s ease-out infinite}
+section{animation:fade .35s ease}
+@keyframes fade{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+#spark{display:block;width:100%;height:34px;margin-top:8px;opacity:.95}
+.sw,.pill,nav button{transition:all .22s ease}
+@media(prefers-reduced-motion:reduce){.aurora i,.dot.on,section{animation:none!important}}@media(max-width:600px){
   body{padding:14px 10px 24px}
   h1{font-size:18px}
   .logo{width:42px;height:42px}
@@ -92,6 +107,7 @@ footer b{color:#8ea6c9;font-weight:600}
 </style>
 </head>
 <body>
+<div class="aurora"><i></i><i></i><i></i></div>
 <div class="wrap">
   <header>
     <svg class="logo" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -126,7 +142,7 @@ footer b{color:#8ea6c9;font-weight:600}
       <div class="card"><div class="k">RAM</div><div class="v" id="v-mem">—</div><div class="h" id="v-memt">—</div></div>
       <div class="card"><div class="k">Узлы VPN</div><div class="v" id="v-nodes">—</div><div class="h" id="v-health">—</div></div>
       <div class="card"><div class="k">Текущий узел</div><div class="v" id="v-delay">—</div><div class="h" id="v-node">—</div></div>
-      <div class="card"><div class="k">Трафик VPN</div><div class="v" id="v-dl">—</div><div class="h" id="v-ul">—</div></div>
+      <div class="card"><div class="k">Трафик VPN</div><div class="v" id="v-dl">—</div><div class="h" id="v-ul">—</div><canvas id="spark" width="240" height="34"></canvas></div>
       <div class="card"><div class="k">Обновление</div><div class="v" id="v-last" style="font-size:15px;margin-top:8px">—</div><div class="h" id="v-last2">подписки</div></div>
     </div>
     <div class="col">
@@ -232,6 +248,32 @@ Array.prototype.forEach.call(document.querySelectorAll('nav button'),function(b)
   b.addEventListener('click',function(){ show(b.getAttribute('data-view')); });
 });
 
+var sparkDl=[],sparkUl=[],prevDl=null,prevUl=null;
+function updateSpark(dl,ul){
+  if(prevDl!==null){
+    sparkDl.push(Math.max(0,dl-prevDl));
+    sparkUl.push(Math.max(0,ul-prevUl));
+    if(sparkDl.length>48){sparkDl.shift();sparkUl.shift();}
+  }
+  prevDl=dl;prevUl=ul;drawSpark();
+}
+function drawSpark(){
+  var c=$('#spark'); if(!c||!c.getContext) return;
+  var ctx=c.getContext('2d'),w=c.width,h=c.height;
+  ctx.clearRect(0,0,w,h);
+  var max=1;sparkDl.concat(sparkUl).forEach(function(v){if(v>max)max=v;});
+  function line(arr,color){
+    if(!arr.length)return;
+    ctx.beginPath();ctx.strokeStyle=color;ctx.lineWidth=1.6;ctx.lineJoin='round';
+    arr.forEach(function(v,i){
+      var x=i*(w/Math.max(1,arr.length-1)), y=h-2-(v/max)*(h-6);
+      i?ctx.lineTo(x,y):ctx.moveTo(x,y);
+    });
+    ctx.stroke();
+  }
+  line(sparkDl,'rgba(79,140,255,.95)');
+  line(sparkUl,'rgba(34,211,238,.75)');
+}
 function refresh(){
   api('action=status').then(function(s){
     dot('#d-mihomo',s.mihomo);dot('#d-vpn',s.vpn);dot('#d-social',s.social);dot('#d-video',s.video);dot('#d-zapret',s.zapret);
@@ -239,10 +281,13 @@ function refresh(){
     $('#v-nodes').textContent=s.nodes;
     $('#v-mem').textContent=Math.round(s.memavail/1024)+' МБ';
     $('#v-memt').textContent='из '+Math.round(s.memtotal/1024)+' МБ';
-    $('#v-delay').textContent=s.delay?(s.delay+' мс'):'—';
+    var delEl=$('#v-delay');
+    delEl.textContent=s.delay?(s.delay+' мс'):'—';
+    delEl.style.color=s.delay?(s.delay<70?'#34d399':(s.delay<150?'#fbbf24':'#f87171')):'';
     $('#v-node').textContent=(s.country?(s.country+' · '):'')+(s.node||'авто');
     $('#v-dl').textContent=fb(s.dl);
     $('#v-ul').textContent='отдано '+fb(s.ul)+' · за '+fmtUp(s.mup);
+    updateSpark(s.dl,s.ul);
     var last='—',sub='подписки';
     if(s.last&&s.last.length){
       var p=s.last.split('|');
