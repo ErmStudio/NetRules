@@ -1,6 +1,9 @@
 #!/bin/sh
 # Полная проверка всех узлов: сколько живых и мёртвых.
 PATH=/opt/bin:/opt/sbin:/bin:/sbin:/usr/bin:/usr/sbin
+export PATH
+HOME="${HOME:-/root}"
+export HOME
 [ -f /opt/etc/mihomo/ui.conf ] && . /opt/etc/mihomo/ui.conf
 API="${MIHOMO_API:-http://127.0.0.1:9090}"
 SECRET="${MIHOMO_SECRET:-change-me}"
