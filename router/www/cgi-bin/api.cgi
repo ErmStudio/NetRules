@@ -169,18 +169,22 @@ except Exception:
     pass
 c = d.get('connections') or []
 dev = collections.Counter(); dom = collections.Counter(); dl = collections.Counter()
+pol = collections.defaultdict(collections.Counter)
 for x in c:
     m = x.get('metadata') or {}
     ip = m.get('sourceIP') or '?'
     h = m.get('host') or m.get('sniffHost') or m.get('destinationIP') or '?'
     dev[ip] += 1; dom[h] += 1
     dl[ip] += (x.get('download') or 0)
+    ch = x.get('chains') or []
+    p = 'PROXY' if 'PROXY' in ch else (ch[0] if ch else '?')
+    pol[h][p] += 1
 out = {
   'total': len(c),
   'up': d.get('uploadTotal', 0),
   'down': d.get('downloadTotal', 0),
   'devices': [{'ip': k, 'name': names.get(k, ''), 'n': v, 'dl': dl[k]} for k, v in dev.most_common(10)],
-  'domains': [{'host': k, 'n': v} for k, v in dom.most_common(12)],
+  'domains': [{'host': k, 'n': v, 'policy': pol[k].most_common(1)[0][0]} for k, v in dom.most_common(12)],
 }
 print(json.dumps(out, ensure_ascii=False))
 "
