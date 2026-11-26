@@ -19,7 +19,7 @@ act=$(printf '%s' "$q" | sed -n 's/.*action=\([a-z_]*\).*/\1/p')
 fld=$(printf '%s' "$q" | sed -n 's/.*f=\([a-z0-9_]*\).*/\1/p')
 
 mihomo_up=0; netstat -ltn 2>/dev/null | grep -q ':7892' && mihomo_up=1
-vpn_on=0; iptables -t nat -S PREROUTING 2>/dev/null | grep -q 'MH_REDIR' && vpn_on=1
+vpn_on=0; [ -f /opt/var/run/mihomo.enabled ] && vpn_on=1
 video_on=0; grep -q 'googlevideo' "$RULES" 2>/dev/null && video_on=1
 social_on=0; grep -q 'DOMAIN-SUFFIX,instagram.com' "$RULES" 2>/dev/null && social_on=1
 zapret_up=0; ps 2>/dev/null | grep -q '[n]fqws2' && zapret_up=1
@@ -152,6 +152,11 @@ case "$act" in
   conns)
     printf 'Content-Type: application/json\n\n'
     if [ "$mihomo_up" = "1" ]; then
+      ND=$(ndmc -c "show ip dhcp bindings" 2>/dev/null | tr -d '\033' | sed 's/\[K//g')
+      printf '%s\n' "$ND" | awk '
+        /^ *ip:/ { ip=$2 }
+        /^ *hostname:/ { if (ip != "") { print ip "|" $2; ip="" } }
+      ' > /tmp/dhcp-names.txt 2>/dev/null
       /opt/bin/curl -s --max-time 8 -H "$AUTH" "$API/connections" 2>/dev/null | /opt/bin/python3 -c "
 import sys, json, collections
 try:
@@ -160,13 +165,15 @@ except Exception:
     print('{\"total\":0,\"devices\":[],\"domains\":[]}')
     raise SystemExit
 names = {}
-try:
-    for line in open('/opt/etc/mihomo/device-names.txt', encoding='utf-8'):
-        if '|' in line:
-            k, v = line.rstrip('\n').split('|', 1)
-            names[k.strip()] = v.strip()
-except Exception:
-    pass
+for src in ('/tmp/dhcp-names.txt', '/opt/etc/mihomo/device-names.txt'):
+    try:
+        for line in open(src, encoding='utf-8'):
+            if '|' in line:
+                k, v = line.rstrip('\n').split('|', 1)
+                if v.strip():
+                    names[k.strip()] = v.strip()
+    except Exception:
+        pass
 c = d.get('connections') or []
 dev = collections.Counter(); dom = collections.Counter(); dl = collections.Counter()
 pol = collections.defaultdict(collections.Counter)

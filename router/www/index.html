@@ -100,6 +100,10 @@ body.light .toast{background:#fff;border-color:rgba(79,140,255,.35);color:#12203
 .pol-direct{background:rgba(255,255,255,.08);color:#9aa8bf}
 .pol-reject{background:rgba(248,113,113,.16);color:#ffb4b4}
 .acts{justify-content:center}
+.acts-5{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+.acts-5 button,.acts-5 a{width:100%;min-width:0;max-width:none;padding:11px 8px;font-size:12.5px}
+@media(max-width:1000px){.acts-5{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:620px){.acts-5{grid-template-columns:repeat(2,1fr)}}
 .acts button,.acts a{flex:1 1 165px;max-width:250px;min-width:140px}.card{transition:transform .25s,border-color .25s,box-shadow .25s}
 .card:hover{transform:translateY(-2px);border-color:rgba(79,140,255,.3);box-shadow:0 12px 30px rgba(0,0,0,.35)}
 @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(52,211,153,.45)}50%{box-shadow:0 0 0 6px rgba(52,211,153,0)}}
@@ -193,7 +197,7 @@ section{animation:fade .35s ease}
       </div>
     </div>
 
-    <div class="acts">
+    <div class="acts acts-5">
       <button class="primary" onclick="act('update')">Обновить подписку</button>
       <button onclick="act('backup')" title="Копия конфигов и скриптов в /storage/mihomo-backup/ГГГГММДД, хранится 7 копий">Бэкап сейчас</button>
       <button onclick="act('restart')">Перезапустить mihomo</button>
@@ -310,6 +314,7 @@ function api(q,o){return fetch('/cgi-bin/api.cgi?'+q,o||{}).then(function(r){ret
 function dot(id,on){$(id).className='dot '+(on?'on':'off');}
 
 var view='overview';
+var lockUntil=0;
 function show(v){
   view=v;
   ['overview','speed','net','service','rules','logs'].forEach(function(x){
@@ -374,7 +379,7 @@ function loadNet(){
     $('#net-total').textContent=d.total||0;
     $('#net-time').textContent='обновлено '+new Date().toLocaleTimeString('ru-RU');
     var dv=(d.devices||[]).map(function(x){
-      var label=x.name?x.name:x.ip;
+      var label=x.name?(x.name+' · '+x.ip):x.ip;
       return '<div class="srow"><span class="nm" style="cursor:pointer" onclick="renameDevice(\''+x.ip+'\',\''+(x.name||'').replace(/'/g,'')+'\')" title="'+x.ip+'">'+label+'</span><span>'+x.n+' соед · '+fb(x.dl)+'</span></div>';
     }).join('')||'<div class="srow"><span class="nm">нет соединений</span></div>';
     $('#net-devices').innerHTML=dv;
