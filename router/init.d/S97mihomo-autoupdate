@@ -1,0 +1,22 @@
+#!/bin/sh
+PATH=/opt/bin:/opt/sbin:/bin:/sbin:/usr/bin:/usr/sbin
+PIDF=/opt/var/run/mihomo-tasks.pid
+case "$1" in
+  start)
+    if [ -f $PIDF ] && kill -0 "$(cat $PIDF 2>/dev/null)" 2>/dev/null; then
+      echo "tasks already running"
+    else
+      ( /opt/etc/mihomo/tasks.sh >/dev/null 2>&1 & )
+      sleep 1
+      echo "tasks started"
+    fi
+    ;;
+  stop)
+    [ -f $PIDF ] && kill "$(cat $PIDF 2>/dev/null)" 2>/dev/null
+    rm -f $PIDF
+    echo "tasks stopped"
+    ;;
+  status)
+    if [ -f $PIDF ] && kill -0 "$(cat $PIDF 2>/dev/null)" 2>/dev/null; then echo running; else echo stopped; fi
+    ;;
+esac

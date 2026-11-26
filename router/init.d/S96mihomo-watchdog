@@ -1,0 +1,22 @@
+#!/bin/sh
+PATH=/opt/bin:/opt/sbin:/bin:/sbin:/usr/bin:/usr/sbin
+PIDF=/opt/var/run/mihomo-watchdog.pid
+case "$1" in
+  start)
+    if [ -f $PIDF ] && kill -0 "$(cat $PIDF 2>/dev/null)" 2>/dev/null; then
+      echo "watchdog already running"
+    else
+      ( /opt/etc/mihomo/watchdog.sh >/dev/null 2>&1 & )
+      sleep 1
+      echo "watchdog started"
+    fi
+    ;;
+  stop)
+    [ -f $PIDF ] && kill "$(cat $PIDF 2>/dev/null)" 2>/dev/null
+    rm -f $PIDF
+    echo "watchdog stopped"
+    ;;
+  status)
+    if [ -f $PIDF ] && kill -0 "$(cat $PIDF 2>/dev/null)" 2>/dev/null; then echo running; else echo stopped; fi
+    ;;
+esac

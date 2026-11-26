@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NetRules · Keenetic</title>
+<style>
+:root{--bg:#080c14;--card:rgba(255,255,255,.045);--line:rgba(255,255,255,.09);--txt:#e8eefc;--dim:#8b9bb8;--acc:#4f8cff;--acc2:#22d3ee;--ok:#34d399;--bad:#f87171;--warn:#fbbf24}
+*{box-sizing:border-box}
+body{margin:0;padding:24px 18px 30px;color:var(--txt);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;min-height:100vh;
+background:radial-gradient(1100px 560px at 12% -8%,#16233f 0%,transparent 55%),radial-gradient(900px 500px at 96% 2%,#0d2b33 0%,transparent 52%),radial-gradient(700px 400px at 50% 110%,#161033 0%,transparent 60%),var(--bg)}
+body:before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.32;
+background-image:repeating-linear-gradient(0deg,rgba(120,160,255,.055) 0 1px,transparent 1px 48px),repeating-linear-gradient(90deg,rgba(120,160,255,.055) 0 1px,transparent 1px 48px);
+mask-image:radial-gradient(circle at 50% 25%,#000 20%,transparent 78%);-webkit-mask-image:radial-gradient(circle at 50% 25%,#000 20%,transparent 78%)}
+body:after{content:"";position:fixed;inset:0;pointer-events:none;background:radial-gradient(600px 300px at 50% -10%,rgba(79,140,255,.15),transparent 70%)}
+.wrap{max-width:1060px;margin:0 auto;position:relative;z-index:1}
+header{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:16px}
+.logo{width:50px;height:50px;flex:0 0 auto;filter:drop-shadow(0 6px 18px rgba(79,140,255,.45))}
+h1{font-size:22px;margin:0;font-weight:700;letter-spacing:.3px;background:linear-gradient(90deg,#fff,#9cc2ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{color:var(--dim);font-size:12px;margin-top:2px}
+.pills{display:flex;gap:8px;margin-left:auto;flex-wrap:wrap}
+.pill{display:flex;align-items:center;gap:7px;padding:7px 12px;border-radius:999px;background:var(--card);border:1px solid var(--line);font-size:12.5px;color:var(--dim)}
+.dot{width:8px;height:8px;border-radius:50%;background:#5b6579}
+.dot.on{background:var(--ok);box-shadow:0 0 10px rgba(52,211,153,.8)}
+.dot.off{background:var(--bad);box-shadow:0 0 10px rgba(248,113,113,.6)}
+nav{display:flex;gap:6px;margin-bottom:18px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:10px}
+nav button{background:transparent;border:1px solid transparent;color:var(--dim);padding:9px 16px;border-radius:10px;font-size:13.5px;cursor:pointer;font-family:inherit;transition:.18s}
+nav button:hover{color:var(--txt);background:rgba(255,255,255,.05)}
+nav button.active{background:rgba(79,140,255,.15);color:#dbe8ff;border-color:rgba(79,140,255,.35)}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px}
+@media(min-width:900px){.grid{grid-template-columns:repeat(6,1fr)}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 18px;backdrop-filter:blur(6px)}
+.k{color:var(--dim);font-size:12px;text-transform:uppercase;letter-spacing:.6px}
+.v{font-size:21px;font-weight:650;margin-top:6px;font-variant-numeric:tabular-nums}
+.h{color:var(--dim);font-size:12px;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.col{display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:14px}
+@media(min-width:900px){.col{grid-template-columns:1fr 1fr}}
+.tog{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+.tog h3{margin:0;font-size:15px;font-weight:600}
+.tog p{margin:5px 0 0;color:var(--dim);font-size:11.5px;line-height:1.45;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sw{position:relative;width:54px;height:31px;flex:0 0 auto;cursor:pointer;margin-top:2px}
+.sw input{display:none}
+.sl{position:absolute;inset:0;background:#2a3244;border-radius:999px;transition:.25s;border:1px solid var(--line)}
+.sl:before{content:"";position:absolute;width:23px;height:23px;border-radius:50%;background:#c7d2e6;top:3px;left:4px;transition:.25s}
+.sw input:checked + .sl{background:linear-gradient(135deg,var(--acc),var(--acc2));box-shadow:0 0 18px rgba(79,140,255,.5)}
+.sw input:checked + .sl:before{transform:translateX(23px);background:#08111f}
+.acts{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}
+button{border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--txt);padding:10px 16px;border-radius:11px;font-size:13.5px;cursor:pointer;font-family:inherit;transition:.18s}
+button:hover{background:rgba(255,255,255,.1)}
+button:disabled{opacity:.55;cursor:default}
+button.primary{background:linear-gradient(135deg,var(--acc),#3b6fe0);border:0;color:#fff;box-shadow:0 8px 22px rgba(79,140,255,.28)}
+textarea{width:100%;min-height:420px;background:#080f1c;color:#cfe0ff;border:1px solid var(--line);border-radius:12px;padding:14px;font-family:ui-monospace,Consolas,monospace;font-size:13px;line-height:1.55}
+pre{margin:0;background:#060b14;border:1px solid var(--line);border-radius:12px;padding:14px;font-family:ui-monospace,Consolas,monospace;font-size:12.5px;line-height:1.65;color:#a9bcd8;height:calc(100vh - 330px);min-height:300px;overflow:auto;white-space:pre-wrap;word-break:break-word}
+.tabs2{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.tab2{padding:7px 13px;border-radius:9px;font-size:12.5px;color:var(--dim);cursor:pointer;border:1px solid transparent}
+.tab2.active{background:rgba(79,140,255,.14);color:#cfe0ff;border-color:rgba(79,140,255,.3)}
+.hidden{display:none}
+.srow{display:flex;justify-content:space-between;gap:12px;padding:8px 12px;border-radius:9px;font-size:12.5px;color:#c3d3ea;background:rgba(255,255,255,.03);margin-bottom:6px}
+.srow.best{background:rgba(52,211,153,.12);color:#bff5dc;border:1px solid rgba(52,211,153,.25)}
+.srow .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.health{display:flex;gap:26px;flex-wrap:wrap;align-items:flex-end;margin-bottom:6px}
+.health .big{font-size:34px;font-weight:700;line-height:1}
+.health .lbl{color:var(--dim);font-size:12px;margin-top:4px}
+.health .ok{color:var(--ok)}
+.health .bad{color:var(--bad)}
+.dead{margin-top:10px;color:#8b9bb8;font-size:12px;line-height:1.7;word-break:break-all}
+footer{max-width:1060px;margin:26px auto 0;text-align:center;color:#5f6d85;font-size:12px;position:relative;z-index:1}
+footer b{color:#8ea6c9;font-weight:600}
+@media(max-width:600px){
+  body{padding:14px 10px 24px}
+  h1{font-size:18px}
+  .logo{width:42px;height:42px}
+  .pills{gap:6px;margin-left:0}
+  .pill{padding:5px 9px;font-size:11px}
+  nav button{padding:8px 12px;font-size:12.5px}
+  .grid{grid-template-columns:repeat(3,1fr);gap:7px}
+  .card{padding:10px;border-radius:11px}
+  .k{font-size:9px;letter-spacing:.2px}
+  .v{font-size:14px;margin-top:3px}
+  .h{font-size:9.5px;margin-top:2px}
+  .tog h3{font-size:13.5px}
+  .tog p{font-size:11px}
+  .sw{width:48px;height:28px}
+  .sw .sl:before{width:20px;height:20px}
+  .sw input:checked + .sl:before{transform:translateX(20px)}
+  button{padding:9px 12px;font-size:12.5px}
+  textarea{min-height:300px;font-size:12px}
+  pre{height:calc(100vh - 300px);font-size:11px}
+  .health .big{font-size:26px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <svg class="logo" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs><linearGradient id="g" x1="0" y1="0" x2="64" y2="64"><stop offset="0" stop-color="#4f8cff"/><stop offset="1" stop-color="#22d3ee"/></linearGradient></defs>
+      <path d="M32 3 58 17v30L32 61 6 47V17L32 3Z" stroke="url(#g)" stroke-width="2.5" fill="rgba(79,140,255,.07)"/>
+      <circle cx="32" cy="18" r="4.5" fill="url(#g)"/>
+      <circle cx="19" cy="41" r="4.5" fill="url(#g)"/>
+      <circle cx="45" cy="41" r="4.5" fill="url(#g)"/>
+      <path d="M32 22.5v9M28.5 30 22 37M35.5 30 42 37" stroke="url(#g)" stroke-width="2.4" stroke-linecap="round"/>
+    </svg>
+    <div><h1>NetRules</h1><div class="sub">Keenetic Hopper · mihomo + zapret</div></div>
+    <div class="pills">
+      <div class="pill"><span class="dot" id="d-mihomo"></span>mihomo</div>
+      <div class="pill"><span class="dot" id="d-vpn"></span>VPN</div>
+      <div class="pill"><span class="dot" id="d-social"></span>соцсети</div>
+      <div class="pill"><span class="dot" id="d-video"></span>видео</div>
+      <div class="pill"><span class="dot" id="d-zapret"></span>zapret</div>
+    </div>
+  </header>
+
+  <nav>
+    <button data-view="overview" class="active">Обзор</button>
+    <button data-view="speed">Скорость</button>
+    <button data-view="rules">Правила</button>
+    <button data-view="logs">Логи</button>
+  </nav>
+
+  <!-- ОБЗОР -->
+  <section id="view-overview">
+    <div class="grid">
+      <div class="card"><div class="k">Аптайм</div><div class="v" id="v-uptime">—</div><div class="h">роутер</div></div>
+      <div class="card"><div class="k">Узлы</div><div class="v" id="v-nodes">—</div><div class="h" id="v-health">—</div></div>
+      <div class="card"><div class="k">RAM</div><div class="v" id="v-mem">—</div><div class="h" id="v-memt">—</div></div>
+      <div class="card"><div class="k">Узел</div><div class="v" id="v-delay">—</div><div class="h" id="v-node">—</div></div>
+      <div class="card"><div class="k">Трафик</div><div class="v" id="v-dl">—</div><div class="h" id="v-ul">—</div></div>
+      <div class="card"><div class="k">Обновление</div><div class="v" id="v-last" style="font-size:15px;margin-top:8px">—</div><div class="h" id="v-last2">подписки</div></div>
+    </div>
+
+    <div class="col">
+      <div class="card tog">
+        <div><h3>VPN-прокси</h3><p>Telegram, ChatGPT и остальные заблокированные — через туннель</p></div>
+        <label class="sw"><input type="checkbox" id="t-vpn"><span class="sl"></span></label>
+      </div>
+      <div class="card tog">
+        <div><h3>Соцсети через VPN</h3><p>Instagram, Facebook, WhatsApp — через туннель</p></div>
+        <label class="sw"><input type="checkbox" id="t-social"><span class="sl"></span></label>
+      </div>
+      <div class="card tog">
+        <div><h3>Видео через VPN</h3><p>Видео Google — нужно для Google Photos</p></div>
+        <label class="sw"><input type="checkbox" id="t-video"><span class="sl"></span></label>
+      </div>
+      <div class="card tog">
+        <div><h3>Zapret (обход DPI)</h3><p>Обход DPI: YouTube, Discord, Instagram</p></div>
+        <label class="sw"><input type="checkbox" id="t-zapret"><span class="sl"></span></label>
+      </div>
+    </div>
+
+    <div class="acts">
+      <button class="primary" onclick="act('update')">Обновить подписку</button>
+      <button onclick="act('backup')">Бэкап сейчас</button>
+      <button onclick="act('restart')">Перезапустить mihomo</button>
+      <a href="http://mihomo.lan:9090/ui/metacubexd/" target="_blank" style="text-decoration:none"><button>Панель mihomo ↗</button></a>
+    </div>
+  </section>
+
+  <!-- СКОРОСТЬ -->
+  <section id="view-speed" class="hidden">
+    <div class="card" style="margin-bottom:14px">
+      <div class="health">
+        <div><div class="big ok" id="hs-alive">—</div><div class="lbl">живых</div></div>
+        <div><div class="big bad" id="hs-dead">—</div><div class="lbl">мёртвых</div></div>
+        <div><div class="big" id="hs-total">—</div><div class="lbl">всего</div></div>
+        <div style="margin-left:auto;text-align:right"><div class="lbl" id="hs-time">проверка ещё не запускалась</div></div>
+      </div>
+      <div class="dead" id="hs-deadlist"></div>
+      <div class="acts" style="margin-bottom:0">
+        <button class="primary" id="btn-check" onclick="nodeCheck()">Проверить все узлы</button>
+        <button id="btn-speed" onclick="speedTest()">Замерить скорость топ-5</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="k" style="margin-bottom:8px">Скорость узлов</div>
+      <div id="speed-list"><div class="srow"><span class="nm">нажми «Замерить скорость топ-5»</span></div></div>
+    </div>
+  </section>
+
+  <!-- ПРАВИЛА -->
+  <section id="view-rules" class="hidden">
+    <textarea id="rules" spellcheck="false" placeholder="загрузка…"></textarea>
+    <div class="acts">
+      <button class="primary" onclick="saveRules()">Сохранить и применить</button>
+      <button onclick="loadRules()">Перечитать</button>
+    </div>
+  </section>
+
+  <!-- ЛОГИ -->
+  <section id="view-logs" class="hidden">
+    <div class="tabs2">
+      <div class="tab2 active" data-f="mihomo">mihomo</div>
+      <div class="tab2" data-f="update">обновление</div>
+      <div class="tab2" data-f="watchdog">watchdog</div>
+      <div class="tab2" data-f="tasks">задачи</div>
+      <div class="tab2" data-f="speed">скорость</div>
+      <div class="tab2" data-f="zapret">zapret</div>
+    </div>
+    <pre id="log">загрузка…</pre>
+  </section>
+</div>
+
+<footer>Сделано в <b>Ermstudio</b> · NetRules для Keenetic</footer>
+<div class="toast" id="toast"></div>
+
+<script>
+const $=function(s){return document.querySelector(s);};
+function toast(m){var t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(window._tt);window._tt=setTimeout(function(){t.classList.remove('show');},2800);}
+function fb(b){b=+b||0;if(b>1073741824)return (b/1073741824).toFixed(2)+' ГБ';if(b>1048576)return (b/1048576).toFixed(1)+' МБ';if(b>1024)return Math.round(b/1024)+' КБ';return b+' Б';}
+function fmtUp(s){s=+s||0;var d=Math.floor(s/86400),h=Math.floor(s%86400/3600),m=Math.floor(s%3600/60);return (d?d+'д ':'')+(h?h+'ч ':'')+m+'м';}
+function api(q,o){return fetch('/cgi-bin/api.cgi?'+q,o||{}).then(function(r){return r.json();});}
+function dot(id,on){$(id).className='dot '+(on?'on':'off');}
+
+var view='overview';
+function show(v){
+  view=v;
+  ['overview','speed','rules','logs'].forEach(function(x){
+    $('#view-'+x).classList.toggle('hidden', x!==v);
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('nav button'),function(b){
+    b.classList.toggle('active', b.getAttribute('data-view')===v);
+  });
+  if(location.hash!=='#'+v) history.replaceState(null,'','#'+v);
+  if(v==='rules') loadRules();
+  if(v==='logs') loadLog();
+  if(v==='speed'){ loadHealth(); loadSpeed(); }
+}
+Array.prototype.forEach.call(document.querySelectorAll('nav button'),function(b){
+  b.addEventListener('click',function(){ show(b.getAttribute('data-view')); });
+});
+
+function refresh(){
+  api('action=status').then(function(s){
+    dot('#d-mihomo',s.mihomo);dot('#d-vpn',s.vpn);dot('#d-social',s.social);dot('#d-video',s.video);dot('#d-zapret',s.zapret);
+    $('#v-uptime').textContent=fmtUp(s.uptime);
+    $('#v-nodes').textContent=s.nodes;
+    $('#v-mem').textContent=Math.round(s.memavail/1024)+' МБ';
+    $('#v-memt').textContent='из '+Math.round(s.memtotal/1024)+' МБ';
+    $('#v-delay').textContent=s.delay?(s.delay+' мс'):'—';
+    $('#v-node').textContent=(s.country?(s.country+' · '):'')+(s.node||'авто');
+    $('#v-dl').textContent=fb(s.dl);
+    $('#v-ul').textContent='отдано '+fb(s.ul);
+    var last='—',sub='подписки';
+    if(s.last&&s.last.length){
+      var p=s.last.split('|');
+      if(p[0]==='OK'){last=p[1]||'—';sub=(p[2]||'')+' узлов';}
+      else if(p[0]==='FAIL'){last='ошибка';sub=p[2]||p[1]||'';}
+      else last=s.last;
+    }
+    $('#v-last').textContent=last;$('#v-last2').textContent=sub;
+    $('#t-vpn').checked=!!s.vpn;$('#t-social').checked=!!s.social;$('#t-video').checked=!!s.video;$('#t-zapret').checked=!!s.zapret;
+  }).catch(function(){});
+}
+
+function loadHealth(){
+  api('action=health').then(function(d){
+    if(!d||!d.total){return;}
+    $('#hs-alive').textContent=d.alive;
+    $('#hs-dead').textContent=d.dead;
+    $('#hs-total').textContent=d.total;
+    $('#hs-time').textContent='проверка: '+(d.time||'—');
+    $('#v-health').textContent='живых '+(d.total-d.dead)+' из '+d.total;
+    var dl=(d.deadlist||[]);
+    $('#hs-deadlist').textContent=dl.length?('не отвечают: '+dl.slice(0,10).join(', ')):'';
+  }).catch(function(){});
+}
+function nodeCheck(){
+  var b=$('#btn-check');b.disabled=true;b.textContent='Проверяю 221 узел…';
+  fetch('/cgi-bin/api.cgi?action=nodecheck',{method:'POST'}).then(function(r){return r.json();}).then(function(d){
+    b.disabled=false;b.textContent='Проверить все узлы';
+    loadHealth();
+    toast('живых '+d.alive+' из '+d.total);
+  }).catch(function(){b.disabled=false;b.textContent='Проверить все узлы';toast('ошибка проверки');});
+}
+
+function renderSpeed(d){
+  var box=$('#speed-list');
+  if(!d||!d.results||!d.results.length){box.innerHTML='<div class="srow"><span class="nm">нет результатов</span></div>';return;}
+  var html='';
+  d.results.slice().sort(function(a,b){return (b.mbps||0)-(a.mbps||0);}).forEach(function(x){
+    var best=(x.node===d.best);
+    html+='<div class="srow'+(best?' best':'')+'"><span class="nm">'+(best?'★ ':'')+(x.country?x.country+' · ':'')+x.node+'</span><span>'+(x.mbps||0)+' Мбит/с'+(x.sec>=99?' · не ответил':'')+'</span></div>';
+  });
+  box.innerHTML=html;
+}
+function loadSpeed(){api('action=speed_last').then(function(d){if(d&&d.results)renderSpeed(d);}).catch(function(){});}
+function speedTest(){
+  var b=$('#btn-speed');b.disabled=true;b.textContent='Тестирую…';
+  fetch('/cgi-bin/api.cgi?action=speedtest',{method:'POST'}).then(function(r){return r.json();}).then(function(d){
+    b.disabled=false;b.textContent='Замерить скорость топ-5';
+    renderSpeed(d); if(d.best) toast('Закреплён: '+(d.bestcountry||'')+' · '+d.best);
+    setTimeout(refresh,1500);
+  }).catch(function(){b.disabled=false;b.textContent='Замерить скорость топ-5';toast('ошибка');});
+}
+
+function loadRules(){api('action=rules_get').then(function(r){$('#rules').value=r.rules||'';}).catch(function(){$('#rules').value='не удалось прочитать';});}
+function saveRules(){
+  var body='rules='+$('#rules').value;
+  fetch('/cgi-bin/api.cgi?action=rules_set',{method:'POST',body:body,headers:{'Content-Type':'text/plain'}})
+    .then(function(r){return r.json();}).then(function(r){toast(r.ok?'Сохранено, применяю ~10 сек':'Ошибка: '+(r.error||''));})
+    .catch(function(){toast('не сохранилось');});
+}
+
+function act(a){
+  fetch('/cgi-bin/api.cgi?action='+a,{method:'POST'}).then(function(){
+    var m={update:'Обновляю подписку…',backup:'Делаю бэкап…',restart:'Перезапускаю mihomo…'};
+    toast(m[a]||'Готово');setTimeout(refresh,2000);
+  }).catch(function(){toast('ошибка');});
+}
+function bindToggle(id,action,on,off){
+  $(id).addEventListener('change',function(e){
+    fetch('/cgi-bin/api.cgi?action='+action,{method:'POST'}).then(function(){toast(e.target.checked?on:off);setTimeout(refresh,2000);});
+  });
+}
+bindToggle('#t-vpn','toggle_vpn','VPN включён','VPN выключен');
+bindToggle('#t-social','toggle_social','Соцсети через VPN','Соцсети напрямую (zapret)');
+bindToggle('#t-video','toggle_video','Видео через VPN','Видео напрямую (zapret)');
+bindToggle('#t-zapret','toggle_zapret','Zapret включён','Zapret выключен');
+
+var logFile='mihomo';
+function loadLog(){
+  api('action=logs&f='+logFile).then(function(r){
+    var el=$('#log');el.textContent=(r.log&&r.log.length)?r.log:'(пусто)';
+  }).catch(function(){$('#log').textContent='не удалось получить лог';});
+}
+Array.prototype.forEach.call(document.querySelectorAll('.tab2'),function(t){
+  t.addEventListener('click',function(){
+    Array.prototype.forEach.call(document.querySelectorAll('.tab2'),function(x){x.classList.remove('active');});
+    t.classList.add('active');logFile=t.getAttribute('data-f');loadLog();
+  });
+});
+
+show((location.hash||'#overview').slice(1));
+refresh(); loadHealth();
+setInterval(refresh,5000);
+setInterval(function(){ if(view==='logs') loadLog(); },10000);
+</script>
+</body>
+</html>

@@ -1,0 +1,43 @@
+#!/bin/sh
+PATH=/opt/bin:/opt/sbin:/bin:/sbin:/usr/bin:/usr/sbin
+PIDF=/opt/var/run/mihomo-supervisor.pid
+RULES=/opt/etc/mihomo/rules.sh
+
+is_up() { netstat -ltn 2>/dev/null | grep -q ":7892"; }
+sup_alive() { [ -f $PIDF ] && kill -0 "$(cat $PIDF 2>/dev/null)" 2>/dev/null; }
+
+start() {
+  if is_up; then
+    $RULES apply
+    echo "mihomo already running, rules applied"
+  else
+    ( /opt/etc/mihomo/supervise.sh >/dev/null 2>&1 & )
+    sleep 7
+    if is_up; then
+      echo "mihomo started, redirect on"
+    else
+      echo "mihomo FAILED, rules off (internet direct)"
+    fi
+  fi
+}
+
+stop() {
+  $RULES clear
+  sup_alive && kill "$(cat $PIDF)" 2>/dev/null
+  killall mihomo 2>/dev/null
+  sleep 2
+  killall -9 mihomo 2>/dev/null
+  rm -f $PIDF /opt/var/run/mihomo.pid
+  echo "mihomo stopped, rules cleared"
+}
+
+case "$1" in
+  start) start ;;
+  stop) stop ;;
+  restart) stop; sleep 1; start ;;
+  status)
+    if is_up; then echo "mihomo: running"; else echo "mihomo: stopped"; fi
+    iptables -t nat -L MH_REDIR -n 2>/dev/null | tail -1
+    ;;
+  *) echo "Usage: $0 {start|stop|restart|status}" ;;
+esac

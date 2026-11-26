@@ -1,0 +1,4 @@
+# Скопируйте в /opt/etc/mihomo/ui.conf и поменяйте секрет.
+# Секрет должен совпадать с "secret" в конфиге mihomo.
+MIHOMO_API="http://127.0.0.1:9090"
+MIHOMO_SECRET="change-me"

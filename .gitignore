@@ -1,0 +1,23 @@
+# секреты и локальные конфиги — не публикуем
+router/scripts/ui.conf
+ui.conf
+
+# сгенерированное на роутере
+config.yaml
+config.yaml.bak
+template.yaml
+sub.url
+sub.json
+countries.txt
+nodes_health.json
+speedtest.json
+last_update.txt
+*.bak
+.last_*
+
+# логи и мусор
+*.log
+*.tmp
+.DS_Store
+Thumbs.db
+__pycache__/
