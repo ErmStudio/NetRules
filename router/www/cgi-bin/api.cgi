@@ -30,6 +30,15 @@ memtot=$(awk '/MemTotal/{print $2}' /proc/meminfo 2>/dev/null)
 memav=$(awk '/MemAvailable/{print $2}' /proc/meminfo 2>/dev/null)
 
 restart_bg() { ( /opt/etc/init.d/S99mihomo restart >/dev/null 2>&1 & ); }
+reload_rules() {
+  /opt/bin/curl -s -o /dev/null --max-time 10 -X PUT \
+    -H "Authorization: Bearer $SECRET" "$API/providers/rules/proxy-sites" 2>/dev/null
+}
+reload_config() {
+  /opt/bin/curl -s -o /dev/null --max-time 15 -X PUT \
+    -H "Authorization: Bearer $SECRET" -H "Content-Type: application/json" \
+    -d '{"path":"/opt/etc/mihomo/config.yaml"}' "$API/configs?force=false" 2>/dev/null
+}
 select_node() {
   /opt/bin/curl -s -o /dev/null --max-time 8 -X PUT \
     -H "Authorization: Bearer dshsecret" -H "Content-Type: application/json" \
@@ -67,10 +76,18 @@ case "$act" in
       fi
     fi
     printf 'Content-Type: application/json\n\n'
+    load=$(awk '{print $1}' /proc/loadavg 2>/dev/null)
+    mihomem=0
+    MPID=$(ps 2>/dev/null | grep '[m]ihomo -d' | awk '{print $1}' | head -1)
+    if [ -n "$MPID" ] && [ -r "/proc/$MPID/status" ]; then
+      mihomem=$(awk '/VmRSS/{print int($2/1024)}' /proc/$MPID/status 2>/dev/null)
+    fi
+    [ -z "$load" ] && load=0
+    [ -z "$mihomem" ] && mihomem=0
     tg=0; grep -q '^TG_TOKEN="..' /opt/etc/mihomo/ui.conf 2>/dev/null && tg=1
-    printf '{"mihomo":%s,"vpn":%s,"video":%s,"social":%s,"zapret":%s,"tg":%s,"nodes":%s,"last":"%s","uptime":%s,"memtotal":%s,"memavail":%s,"node":"%s","country":"%s","delay":"%s","mup":%s,"dl":%s,"ul":%s}\n' \
+    printf '{"mihomo":%s,"vpn":%s,"video":%s,"social":%s,"zapret":%s,"tg":%s,"nodes":%s,"last":"%s","uptime":%s,"memtotal":%s,"memavail":%s,"node":"%s","country":"%s","delay":"%s","mup":%s,"load":"%s","mihomem":%s,"dl":%s,"ul":%s}\n' \
       "$mihomo_up" "$vpn_on" "$video_on" "$social_on" "$zapret_up" "$tg" "$nodes" "$(esc "$lu")" "$up" "$memtot" "$memav" \
-      "$(esc "$node")" "$(esc "$country")" "$(esc "$delay")" "$mup" "$dl" "$ul"
+      "$(esc "$node")" "$(esc "$country")" "$(esc "$delay")" "$mup" "$(esc "$load")" "$mihomem" "$dl" "$ul"
     ;;
 
   rules_get)
@@ -93,7 +110,7 @@ case "$act" in
     DATA=$(printf '%s' "$BODY" | sed '1s/^rules=//' | tr -d '\r')
     printf '%s' "$DATA" > "$RULES.tmp"
     if head -1 "$RULES.tmp" | grep -q '^payload:'; then
-      mv "$RULES.tmp" "$RULES"; restart_bg
+      mv "$RULES.tmp" "$RULES"; reload_rules
       printf 'Content-Type: application/json\n\n{"ok":true}\n'
     else
       rm -f "$RULES.tmp"
@@ -110,7 +127,7 @@ case "$act" in
     else
       sed -i '/googlevideo/d' "$RULES"
     fi
-    restart_bg
+    reload_rules
     printf 'Content-Type: application/json\n\n{"ok":true,"video":%s}\n' "$want"
     ;;
 
@@ -123,7 +140,7 @@ case "$act" in
     else
       sed -i '/DOMAIN-SUFFIX,instagram.com/d;/DOMAIN-SUFFIX,cdninstagram.com/d;/DOMAIN-SUFFIX,facebook.com/d;/DOMAIN-SUFFIX,fbcdn.net/d;/DOMAIN-SUFFIX,whatsapp.com/d;/DOMAIN-SUFFIX,whatsapp.net/d' "$RULES"
     fi
-    restart_bg
+    reload_rules
     printf 'Content-Type: application/json\n\n{"ok":true,"social":%s}\n' "$want"
     ;;
 
@@ -250,7 +267,7 @@ print(json.dumps(out, ensure_ascii=False))
         done
         ;;
     esac
-    restart_bg
+    reload_config
     printf 'Content-Type: application/json\n\n{"ok":true,"host":"%s","policy":"%s"}\n' "$host" "$pol"
     ;;
 

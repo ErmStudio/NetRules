@@ -4,6 +4,10 @@ LOG=/opt/var/log/mihomo-watchdog.log
 PIDF=/opt/var/run/mihomo-watchdog.pid
 API="http://127.0.0.1:9090/proxies/AUTO/delay?url=http%3A%2F%2Fwww.gstatic.com%2Fgenerate_204&timeout=6000"
 
+if [ -f $PIDF ] && kill -0 "$(cat $PIDF 2>/dev/null)" 2>/dev/null; then
+  echo "watchdog already running"
+  exit 0
+fi
 echo $$ > $PIDF
 
 fails=0
@@ -43,7 +47,8 @@ while true; do
     /opt/etc/init.d/S99mihomo start >> $LOG 2>&1
     sleep 10
   else
-    R=$(/opt/bin/wget -q -O - --timeout=8 --tries=1 --header="$AUTH" "$API" 2>/dev/null)
+    if [ -f /tmp/mh-checking ]; then sleep 5; continue; fi
+    R=$(/opt/bin/wget -q -O - --timeout=12 --tries=1 --header="$AUTH" "$API" 2>/dev/null)
     if echo "$R" | grep -q '"delay"'; then
       if [ "$fails" -gt 0 ]; then
         echo "$(date '+%F %T') проверка снова проходит" >> $LOG
@@ -52,8 +57,8 @@ while true; do
       check_pinned
     else
       fails=$((fails+1))
-      echo "$(date '+%F %T') проверка прокси не прошла ($fails из 3)" >> $LOG
-      if [ "$fails" -ge 3 ]; then
+      echo "$(date '+%F %T') проверка прокси не прошла ($fails из 5)" >> $LOG
+      if [ "$fails" -ge 5 ]; then
         now=$(date +%s)
         if [ $((now - window)) -gt 3600 ]; then restarts=0; window=$now; fi
         restarts=$((restarts+1))

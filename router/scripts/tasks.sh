@@ -6,6 +6,10 @@ PIDF=/opt/var/run/mihomo-tasks.pid
 [ -f /opt/etc/mihomo/ui.conf ] && . /opt/etc/mihomo/ui.conf
 MIHOMO_API="${MIHOMO_API:-http://127.0.0.1:9090}"
 MIHOMO_SECRET="${MIHOMO_SECRET:-change-me}"
+if [ -f $PIDF ] && kill -0 "$(cat $PIDF 2>/dev/null)" 2>/dev/null; then
+  echo "tasks already running"
+  exit 0
+fi
 echo $$ > $PIDF
 
 while true; do

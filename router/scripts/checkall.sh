@@ -8,8 +8,12 @@ AUTH="Authorization: Bearer $SECRET"
 OUT=/opt/etc/mihomo/nodes_health.json
 CT=/opt/etc/mihomo/countries.txt
 LOG=/opt/var/log/mihomo-speedtest.log
+LOCK=/tmp/mh-checking
 TMP=/tmp/mh-nodes.txt
 RES=/tmp/mh-health.txt
+
+touch $LOCK
+trap 'rm -f $LOCK' EXIT
 
 i=0
 while [ $i -lt 20 ]; do
