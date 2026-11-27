@@ -569,7 +569,10 @@ function loadCfg(){
     if(c.router && $('#lnk-router')) $('#lnk-router').href=c.router;
     if(c.zapret && $('#lnk-zapret')) $('#lnk-zapret').href=c.zapret;
     if(c.mihomo && $('#lnk-mihomo')) $('#lnk-mihomo').href=c.mihomo;
-    if(c.version && $('#ver')) $('#ver').textContent='v'+c.version;
+    if(c.version){
+      if($('#ver')) $('#ver').textContent='v'+c.version;
+      if($('#about-ver')) $('#about-ver').textContent='v'+c.version;
+    }
   }).catch(function(){});
 }
 function refresh(){
