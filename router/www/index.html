@@ -134,7 +134,11 @@ section{animation:fade .35s ease}
 @keyframes hopfloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
 .logo{animation:hopfloat 6s ease-in-out infinite}
 button.primary:hover{box-shadow:0 12px 30px rgba(79,140,255,.5)}
-@media(prefers-reduced-motion:reduce){.grid>.card,.logo{animation:none!important}}@media(max-width:700px){
+@media(prefers-reduced-motion:reduce){.grid>.card,.logo{animation:none!important}}.logo-link{display:block;line-height:0;border-radius:16px;transition:transform .25s,box-shadow .25s}
+.logo-link:hover{transform:translateY(-2px) scale(1.04);box-shadow:0 10px 26px rgba(79,140,255,.35)}
+#loadbar{position:fixed;top:0;left:0;height:2px;width:0;z-index:120;pointer-events:none;opacity:0;
+  background:linear-gradient(90deg,#4f8cff,#22d3ee);box-shadow:0 0 10px rgba(79,140,255,.8);transition:width .25s ease,opacity .4s}
+#loadbar.on{opacity:1}@media(max-width:700px){
   .grid>.card{grid-column:span 6}
   .grid>.card.wide{grid-column:span 12}
   .col>.card{grid-column:span 12}
@@ -167,17 +171,18 @@ button.primary:hover{box-shadow:0 12px 30px rgba(79,140,255,.5)}
 </style>
 </head>
 <body>
+<div id="loadbar"></div>
 <div class="aurora"><i></i><i></i><i></i></div>
 <div class="wrap">
   <header>
-    <svg class="logo" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <a href="/" class="logo-link" title="На главную" onclick="goHome(event)"><svg class="logo" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
       <defs><linearGradient id="g" x1="0" y1="0" x2="64" y2="64"><stop offset="0" stop-color="#4f8cff"/><stop offset="1" stop-color="#22d3ee"/></linearGradient></defs>
       <path d="M32 3 58 17v30L32 61 6 47V17L32 3Z" stroke="url(#g)" stroke-width="2.5" fill="rgba(79,140,255,.07)"/>
       <circle cx="32" cy="18" r="4.5" fill="url(#g)"/>
       <circle cx="19" cy="41" r="4.5" fill="url(#g)"/>
       <circle cx="45" cy="41" r="4.5" fill="url(#g)"/>
       <path d="M32 22.5v9M28.5 30 22 37M35.5 30 42 37" stroke="url(#g)" stroke-width="2.4" stroke-linecap="round"/>
-    </svg>
+    </svg></a>
     <div><h1>NetRules</h1><div class="sub">Keenetic Hopper · mihomo + zapret</div></div>
     <button class="iconbtn" id="theme-btn" title="Переключить тему">☀</button>
     <div class="pills">
@@ -337,7 +342,7 @@ button.primary:hover{box-shadow:0 12px 30px rgba(79,140,255,.5)}
   </section>
 </div>
 
-<footer>Сделано в <b>Ermstudio</b> · NetRules для Keenetic</footer>
+<footer>Сделано в <b>Ermstudio</b> · NetRules для Keenetic · <span style="opacity:.75">1–6 — вкладки, R — обновить</span></footer>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -348,6 +353,38 @@ function fmtUp(s){s=+s||0;var d=Math.floor(s/86400),h=Math.floor(s%86400/3600),m
 function api(q,o){return fetch('/cgi-bin/api.cgi?'+q,o||{}).then(function(r){return r.json();});}
 function dot(id,on){$(id).className='dot '+(on?'on':'off');}
 
+function goHome(e){
+  if(e) e.preventDefault();
+  show('overview');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+(function(){
+  var _f=window.fetch, pending=0, bar=null;
+  function barEl(){ if(!bar) bar=document.getElementById('loadbar'); return bar; }
+  function start(){
+    var b=barEl(); if(!b) return;
+    b.classList.add('on'); b.style.width='15%';
+    setTimeout(function(){ if(b.style.width==='15%') b.style.width='55%'; },120);
+  }
+  function done(){
+    var b=barEl(); if(!b) return;
+    b.style.width='100%';
+    setTimeout(function(){ b.classList.remove('on'); b.style.width='0'; },260);
+  }
+  window.fetch=function(){
+    pending++; start();
+    var p=_f.apply(this,arguments);
+    p.then(function(){ pending--; if(pending<=0) done(); },function(){ pending--; if(pending<=0) done(); });
+    return p;
+  };
+})();
+document.addEventListener('keydown',function(e){
+  var t=e.target||{}; if(t.tagName==='TEXTAREA'||t.tagName==='INPUT') return;
+  var views=['overview','speed','net','service','rules','logs'];
+  if(e.key>='1'&&e.key<='6'){ show(views[+e.key-1]); window.scrollTo({top:0,behavior:'smooth'}); }
+  if(e.key==='r'||e.key==='R'||e.key==='к'||e.key==='К'){ refresh(); toast('Обновлено'); }
+  if(e.key==='Escape'){ closeRule(); }
+});
 var view='overview';
 var lockUntil=0;
 function show(v){
