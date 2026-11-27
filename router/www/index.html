@@ -62,6 +62,7 @@ pre{margin:0;background:#060b14;border:1px solid var(--line);border-radius:12px;
 .tab2.active{background:rgba(79,140,255,.14);color:#cfe0ff;border-color:rgba(79,140,255,.3)}
 .hidden{display:none}
 .srow{display:flex;justify-content:space-between;gap:12px;padding:8px 12px;border-radius:9px;font-size:12.5px;color:#c3d3ea;background:rgba(255,255,255,.03);margin-bottom:6px}
+.srow.warn{background:rgba(248,113,113,.10);border:1px solid rgba(248,113,113,.22)}
 .srow.best{background:rgba(52,211,153,.12);color:#bff5dc;border:1px solid rgba(52,211,153,.25)}
 .srow .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .health{display:flex;gap:26px;flex-wrap:wrap;align-items:flex-end;margin-bottom:6px}
@@ -86,7 +87,8 @@ body.light .aurora{opacity:.2}
 body.light h1{background:linear-gradient(90deg,#12203a,#2a5cc4);-webkit-background-clip:text;background-clip:text;color:transparent}
 body.light pre,body.light textarea{background:#f7faff;color:#26364f;border-color:rgba(20,40,80,.13)}
 body.light .srow{background:rgba(20,40,80,.045);color:#26364f}
-body.light .srow.best{background:rgba(52,211,153,.18);color:#0b6b4d;border-color:rgba(16,150,110,.3)}
+body.light .srow.warn{background:rgba(248,113,113,.10);border:1px solid rgba(248,113,113,.22)}
+.srow.best{background:rgba(52,211,153,.18);color:#0b6b4d;border-color:rgba(16,150,110,.3)}
 body.light nav button.active{background:rgba(79,140,255,.18);color:#12203a}
 body.light .card{box-shadow:0 6px 18px rgba(20,40,80,.06)}
 body.light button{background:rgba(255,255,255,.85)}
@@ -282,7 +284,7 @@ button.primary:hover{box-shadow:0 12px 30px rgba(79,140,255,.5)}
     </div>
     <div class="col">
       <div class="card"><div class="k" style="margin-bottom:8px">Устройства <span style="text-transform:none;color:#5f6d85">— клик по имени, чтобы переименовать</span></div><div id="net-devices"><div class="srow"><span class="nm">—</span></div></div></div>
-      <div class="card"><div class="k" style="margin-bottom:8px">Домены <span style="text-transform:none;color:#5f6d85">— клик, чтобы задать правило</span></div><div id="net-domains"><div class="srow"><span class="nm">—</span></div></div></div>
+      <div class="card"><div class="k" style="margin-bottom:8px">Домены <span style="text-transform:none;color:#5f6d85">— клик, чтобы задать правило; ⚠ = висит без ответа</span></div><div id="net-domains"><div class="srow"><span class="nm">—</span></div></div></div>
     </div>
   </section>
 
@@ -458,7 +460,11 @@ function loadNet(){
     var dm=(d.domains||[]).map(function(x){
       var p=(x.policy||'').toUpperCase();
       var cls=p==='PROXY'?'pol-proxy':(p==='REJECT'?'pol-reject':'pol-direct');
-      return '<div class="srow"><span class="nm" style="cursor:pointer" onclick="openRule(\''+x.host+'\')">'+x.host+'</span><span class="pol '+cls+'">'+p+'</span><span>'+x.n+'</span></div>';
+      var warn=(x.stalled||0)>0;
+      return '<div class="srow'+(warn?' warn':'')+'">'
+        +'<span class="nm" style="cursor:pointer" onclick="openRule(\''+x.host+'\')">'
+        +(warn?'⚠ ':'')+x.host+'</span>'
+        +'<span class="pol '+cls+'">'+p+'</span><span>'+x.n+(warn?' · висит '+x.stalled:'')+'</span></div>';
     }).join('')||'<div class="srow"><span class="nm">нет соединений</span></div>';
     $('#net-domains').innerHTML=dm;
   }).catch(function(){});

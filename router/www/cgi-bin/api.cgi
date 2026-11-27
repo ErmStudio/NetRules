@@ -193,6 +193,7 @@ case "$act" in
       ' > /tmp/dhcp-names.txt 2>/dev/null
       /opt/bin/curl -s --max-time 8 -H "$AUTH" "$API/connections" 2>/dev/null | /opt/bin/python3 -c "
 import sys, json, collections
+from datetime import datetime, timezone
 try:
     d = json.load(sys.stdin)
 except Exception:
@@ -208,24 +209,40 @@ for src in ('/tmp/dhcp-names.txt', '/opt/etc/mihomo/device-names.txt'):
                     names[k.strip()] = v.strip()
     except Exception:
         pass
+
+def age_sec(x):
+    s = x.get('start') or ''
+    try:
+        t = datetime.fromisoformat(s.replace('Z', '+00:00'))
+        return (datetime.now(timezone.utc) - t).total_seconds()
+    except Exception:
+        return 0
+
 c = d.get('connections') or []
 dev = collections.Counter(); dom = collections.Counter(); dl = collections.Counter()
 pol = collections.defaultdict(collections.Counter)
+stall = collections.Counter()
 for x in c:
     m = x.get('metadata') or {}
     ip = m.get('sourceIP') or '?'
     h = m.get('host') or m.get('sniffHost') or m.get('destinationIP') or '?'
     dev[ip] += 1; dom[h] += 1
-    dl[ip] += (x.get('download') or 0)
+    down = x.get('download') or 0
+    up = x.get('upload') or 0
+    dl[ip] += down
     ch = x.get('chains') or []
     p = 'PROXY' if 'PROXY' in ch else (ch[0] if ch else '?')
     pol[h][p] += 1
+    if down == 0 and up > 50 and age_sec(x) > 3:
+        stall[h] += 1
+
+doms = sorted(dom.items(), key=lambda kv: (-stall[kv[0]], -kv[1]))[:12]
 out = {
   'total': len(c),
   'up': d.get('uploadTotal', 0),
   'down': d.get('downloadTotal', 0),
   'devices': [{'ip': k, 'name': names.get(k, ''), 'n': v, 'dl': dl[k]} for k, v in dev.most_common(10)],
-  'domains': [{'host': k, 'n': v, 'policy': pol[k].most_common(1)[0][0]} for k, v in dom.most_common(12)],
+  'domains': [{'host': k, 'n': v, 'policy': pol[k].most_common(1)[0][0], 'stalled': stall[k]} for k, v in doms],
 }
 print(json.dumps(out, ensure_ascii=False))
 "
