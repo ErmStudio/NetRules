@@ -71,6 +71,14 @@ select, select option{background:#151a24;color:#e8eefc;border:1px solid rgba(255
 select option:checked{background:#243049}
 body.light select, body.light select option{background:#fff;color:#111}
 
+
+/* карточка трафика: график уже, цифры не вылезают */
+.kv{gap:10px}
+.kv canvas{flex:0 0 38%;width:38%;height:44px}
+.kvi{flex:1 1 auto;min-width:0;overflow:hidden}
+#v-dl{font-size:clamp(16px,1.7vw,21px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.3px}
+#v-ul{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media(max-width:700px){ .kv canvas{flex:0 0 45%;width:45%} #v-dl{font-size:19px} }
 .speedrow{gap:8px}
 #check-state:empty{display:none}
 .speedrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
@@ -523,7 +531,7 @@ button.primary:hover{box-shadow:0 12px 30px rgba(79,140,255,.5)}
 <script>
 const $=function(s){return document.querySelector(s);};
 function toast(m){var t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(window._tt);window._tt=setTimeout(function(){t.classList.remove('show');},2800);}
-function fb(b){b=+b||0;if(b>1073741824)return (b/1073741824).toFixed(2)+' ГБ';if(b>1048576)return (b/1048576).toFixed(1)+' МБ';if(b>1024)return Math.round(b/1024)+' КБ';return b+' Б';}
+function fb(b){b=+b||0;if(b>=1099511627776)return (b/1099511627776).toFixed(2)+' ТБ';if(b>=1073741824){var g=b/1073741824;return (g>=10?g.toFixed(1):g.toFixed(2))+' ГБ';}if(b>=1048576)return (b/1048576).toFixed(1)+' МБ';if(b>=1024)return Math.round(b/1024)+' КБ';return b+' Б';}
 function fmtUp(s){s=+s||0;var d=Math.floor(s/86400),h=Math.floor(s%86400/3600),m=Math.floor(s%3600/60);return (d?d+'д ':'')+(h?h+'ч ':'')+m+'м';}
 function api(q,o){return fetch('/cgi-bin/api.cgi?'+q,o||{}).then(function(r){return r.json();});}
 function dot(id,on){$(id).className='dot '+(on?'on':'off');}
