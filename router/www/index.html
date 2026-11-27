@@ -83,6 +83,10 @@ pre{margin:0;background:#060b14;border:1px solid var(--line);border-radius:12px;
 .dead{margin-top:10px;color:#8b9bb8;font-size:12px;line-height:1.7;word-break:break-all}
 footer{max-width:1060px;margin:26px auto 0;text-align:center;color:#5f6d85;font-size:12px;position:relative;z-index:1}
 footer b{color:#8ea6c9;font-weight:600}
+footer a.author{color:#8ea6c9;text-decoration:none;border-bottom:1px dotted rgba(142,166,201,.45);transition:color .2s,border-color .2s}
+footer a.author:hover{color:#cfe0ff;border-color:rgba(207,224,255,.7)}
+body.light footer a.author{color:#5a6b87;border-color:rgba(90,107,135,.4)}
+body.light footer a.author:hover{color:#12203a}
 .aurora{position:fixed;inset:-25%;z-index:0;pointer-events:none;filter:blur(70px);opacity:.55}
 .aurora i{position:absolute;display:block;border-radius:50%;mix-blend-mode:screen;animation:drift 28s ease-in-out infinite alternate}
 .aurora i:nth-child(1){width:520px;height:520px;left:-8%;top:-12%;background:radial-gradient(circle,#1d3a7a,transparent 65%)}
@@ -384,7 +388,7 @@ button.primary:hover{box-shadow:0 12px 30px rgba(79,140,255,.5)}
   </section>
 </div>
 
-<footer>Сделано в <b>Ermstudio</b> · NetRules <span id="ver"></span> для Keenetic · <span style="opacity:.75">1–6 — вкладки, R — обновить, V — видео</span></footer>
+<footer>Сделано в <a class="author" href="https://github.com/ErmStudio" target="_blank" rel="noopener"><b>Ermstudio</b></a> · NetRules <span id="ver"></span> для Keenetic · <span style="opacity:.75">1–6 — вкладки, R — обновить, V — видео</span></footer>
 <div class="toast" id="toast"></div>
 
 <script>
