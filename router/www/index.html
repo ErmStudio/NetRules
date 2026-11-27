@@ -64,10 +64,11 @@ pre{margin:0;background:#060b14;border:1px solid var(--line);border-radius:12px;
 .srow{display:flex;justify-content:space-between;gap:12px;padding:8px 12px;border-radius:9px;font-size:12.5px;color:#c3d3ea;background:rgba(255,255,255,.03);margin-bottom:6px}
 .mini{padding:5px 10px;font-size:11px;border-radius:8px;white-space:nowrap}
 .card.compact{padding:12px 14px;border-radius:13px}
-.speed-cards>.card{display:flex;flex-direction:column;justify-content:center;min-height:78px;padding:9px 14px;gap:2px}
+.speed-cards>.card{display:flex;flex-direction:column;justify-content:center;min-height:0;padding:9px 14px;gap:2px}
 .speed-cards .big{font-size:25px;line-height:1.05}
 .speed-cards .lbl{font-size:10.5px;margin-top:1px}
 .speedrow{gap:8px}
+#check-state:empty{display:none}
 .speedrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .speedrow .seg{margin-left:auto}
 @media(max-width:700px){
@@ -89,7 +90,7 @@ pre{margin:0;background:#060b14;border:1px solid var(--line);border-radius:12px;
   
 }
 .speed-cards>.card{display:flex;flex-direction:column;gap:10px;min-height:126px;padding:14px 16px}
-.speed-cards>.card>.health{margin-top:auto;gap:22px;align-items:flex-end}
+.speed-cards>.card>.health{gap:22px;align-items:flex-end}
 .speed-cards .k{font-size:11px}
 .rowline{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-height:30px}
 .rowline .seg{margin-left:auto}
@@ -133,10 +134,11 @@ body.light pre,body.light textarea{background:#f7faff;color:#26364f;border-color
 body.light .srow{background:rgba(20,40,80,.045);color:#26364f}
 body.light .mini{padding:5px 10px;font-size:11px;border-radius:8px;white-space:nowrap}
 .card.compact{padding:12px 14px;border-radius:13px}
-.speed-cards>.card{display:flex;flex-direction:column;justify-content:center;min-height:78px;padding:9px 14px;gap:2px}
+.speed-cards>.card{display:flex;flex-direction:column;justify-content:center;min-height:0;padding:9px 14px;gap:2px}
 .speed-cards .big{font-size:25px;line-height:1.05}
 .speed-cards .lbl{font-size:10.5px;margin-top:1px}
 .speedrow{gap:8px}
+#check-state:empty{display:none}
 .speedrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .speedrow .seg{margin-left:auto}
 @media(max-width:700px){
@@ -158,7 +160,7 @@ body.light .mini{padding:5px 10px;font-size:11px;border-radius:8px;white-space:n
   
 }
 .speed-cards>.card{display:flex;flex-direction:column;gap:10px;min-height:126px;padding:14px 16px}
-.speed-cards>.card>.health{margin-top:auto;gap:22px;align-items:flex-end}
+.speed-cards>.card>.health{gap:22px;align-items:flex-end}
 .speed-cards .k{font-size:11px}
 .rowline{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-height:30px}
 .rowline .seg{margin-left:auto}
@@ -346,8 +348,8 @@ button.primary:hover{box-shadow:0 12px 30px rgba(79,140,255,.5)}
       </div>
 
       <div class="card compact">
+        <div class="lbl" style="font-size:11px;opacity:.75;margin-bottom:6px">период автопроверки</div>
         <div class="speedrow">
-          <span class="lbl" style="font-size:11px;opacity:.75">период автопроверки</span>
           <span class="seg" id="int-mode">
             <button data-h="1">1 ч</button>
             <button data-h="2">2 ч</button>
@@ -357,7 +359,7 @@ button.primary:hover{box-shadow:0 12px 30px rgba(79,140,255,.5)}
           </span>
           <button class="primary" style="margin-left:auto;padding:8px 16px;font-size:12.5px" onclick="fullCheck()" title="Проверить узлы и замерить скорость">Замерить</button>
         </div>
-        <div class="h" id="check-state" style="font-size:11.5px;color:var(--dim);white-space:normal;margin-top:8px;min-height:14px"></div>
+        <div class="h" id="check-state" style="font-size:11.5px;color:var(--dim);white-space:normal;margin-top:6px"></div>
       </div>
     </div>
 
