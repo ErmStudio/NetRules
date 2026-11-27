@@ -528,7 +528,7 @@ function refresh(){
     $('#v-memt').textContent='из '+Math.round(s.memtotal/1024)+' МБ';
     $('#v-load').textContent=(s.load||'0')+'';
     $('#v-mup').textContent=fmtUp(s.mup);
-    $('#v-mihomem').textContent='с последней перезагрузки · '+(s.mihomem||0)+' МБ';
+    $('#v-mihomem').textContent='с перезагрузки · '+(s.mihomem||0)+' МБ памяти';
     var delEl=$('#v-delay');
     delEl.textContent=s.delay?(s.delay+' мс'):'—';
     delEl.style.color=s.delay?(s.delay<70?'#34d399':(s.delay<150?'#fbbf24':'#f87171')):'';
