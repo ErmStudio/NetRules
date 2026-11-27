@@ -297,7 +297,7 @@ button.primary:hover{box-shadow:0 12px 30px rgba(79,140,255,.5)}
     <div class="grid">
       <div class="card"><div class="k">Аптайм роутера</div><div class="v" id="v-uptime">—</div><div class="h">с последней перезагрузки</div></div>
       <div class="card"><div class="k">Аптайм mihomo</div><div class="v" id="v-mup">—</div><div class="h" id="v-mihomem">—</div></div>
-      <div class="card"><div class="k">CPU роутера</div><div class="v" id="v-load">—</div><div class="h">load average 1 мин</div></div>
+      <div class="card"><div class="k">CPU роутера</div><div class="v" id="v-load">—</div><div class="h" id="v-load-t">load average 1 мин</div></div>
       <div class="card"><div class="k">RAM роутера</div><div class="v" id="v-mem">—</div><div class="h" id="v-memt">—</div></div>
       <div class="card"><div class="k">Узлы прокси</div><div class="v" id="v-nodes">—</div><div class="h" id="v-health">—</div></div>
       
@@ -670,6 +670,7 @@ function refresh(){
     animNum($('#v-mem'),s.memavail,function(v){return Math.round(v/1024)+' МБ';});
     $('#v-memt').textContent='из '+Math.round(s.memtotal/1024)+' МБ';
     $('#v-load').textContent=(s.load||'0')+'';
+    $('#v-load-t').textContent='темп. '+(s.temp||'—')+' °C';
     $('#v-mup').textContent=fmtUp(s.mup);
     $('#v-mihomem').textContent='с перезагрузки · '+(s.mihomem||0)+' МБ памяти';
     var delEl=$('#v-delay');

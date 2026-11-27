@@ -79,6 +79,12 @@ case "$act" in
     fi
     printf 'Content-Type: application/json\n\n'
     load=$(awk '{print $1}' /proc/loadavg 2>/dev/null)
+    TZ0=$(cat /sys/class/thermal/thermal_zone0/temp 2>/dev/null)
+    temp=0
+    case "$TZ0" in
+      [0-9]*) temp=$((TZ0 / 1000)) ;;
+      *) temp=0 ;;
+    esac
     mihomem=0
     MPID=$(ps 2>/dev/null | grep '[m]ihomo -d' | awk '{print $1}' | head -1)
     if [ -n "$MPID" ] && [ -r "/proc/$MPID/status" ]; then
@@ -87,9 +93,9 @@ case "$act" in
     [ -z "$load" ] && load=0
     [ -z "$mihomem" ] && mihomem=0
     tg=0; grep -q '^TG_TOKEN="..' /opt/etc/mihomo/ui.conf 2>/dev/null && tg=1
-    printf '{"mihomo":%s,"vpn":%s,"video":%s,"social":%s,"zapret":%s,"tg":%s,"nodes":%s,"last":"%s","uptime":%s,"memtotal":%s,"memavail":%s,"node":"%s","country":"%s","delay":"%s","mup":%s,"load":"%s","mihomem":%s,"dl":%s,"ul":%s}\n' \
+    printf '{"mihomo":%s,"vpn":%s,"video":%s,"social":%s,"zapret":%s,"tg":%s,"nodes":%s,"last":"%s","uptime":%s,"memtotal":%s,"memavail":%s,"node":"%s","country":"%s","delay":"%s","mup":%s,"load":"%s","temp":%s,"mihomem":%s,"dl":%s,"ul":%s}\n' \
       "$mihomo_up" "$vpn_on" "$video_on" "$social_on" "$zapret_up" "$tg" "$nodes" "$(esc "$lu")" "$up" "$memtot" "$memav" \
-      "$(esc "$node")" "$(esc "$country")" "$(esc "$delay")" "$mup" "$(esc "$load")" "$mihomem" "$dl" "$ul"
+      "$(esc "$node")" "$(esc "$country")" "$(esc "$delay")" "$mup" "$(esc "$load")" "$temp" "$mihomem" "$dl" "$ul"
     ;;
 
   rules_get)
