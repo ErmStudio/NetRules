@@ -221,7 +221,8 @@ def age_sec(x):
 c = d.get('connections') or []
 dev = collections.Counter(); dom = collections.Counter(); dl = collections.Counter()
 pol = collections.defaultdict(collections.Counter)
-stall = collections.Counter()
+stall = collections.Counter(); stallage = collections.defaultdict(float)
+rules = collections.defaultdict(collections.Counter)
 for x in c:
     m = x.get('metadata') or {}
     ip = m.get('sourceIP') or '?'
@@ -233,8 +234,15 @@ for x in c:
     ch = x.get('chains') or []
     p = 'PROXY' if 'PROXY' in ch else (ch[0] if ch else '?')
     pol[h][p] += 1
-    if down == 0 and up > 50 and age_sec(x) > 3:
+    r = x.get('rule') or ''
+    rp = x.get('rulePayload') or ''
+    if r:
+        rules[h][r + ('/' + rp if rp else '')] += 1
+    a = age_sec(x)
+    if down == 0 and up > 100 and a > 6:
         stall[h] += 1
+        if a > stallage[h]:
+            stallage[h] = a
 
 doms = sorted(dom.items(), key=lambda kv: (-stall[kv[0]], -kv[1]))[:12]
 out = {
@@ -242,13 +250,34 @@ out = {
   'up': d.get('uploadTotal', 0),
   'down': d.get('downloadTotal', 0),
   'devices': [{'ip': k, 'name': names.get(k, ''), 'n': v, 'dl': dl[k]} for k, v in dev.most_common(10)],
-  'domains': [{'host': k, 'n': v, 'policy': pol[k].most_common(1)[0][0], 'stalled': stall[k]} for k, v in doms],
+  'domains': [{
+      'host': k, 'n': v,
+      'policy': pol[k].most_common(1)[0][0],
+      'rule': rules[k].most_common(1)[0][0] if rules[k] else '',
+      'stalled': stall[k],
+      'stallsec': int(stallage[k]),
+  } for k, v in doms],
 }
 print(json.dumps(out, ensure_ascii=False))
 "
     else
       printf '{"total":0,"devices":[],"domains":[]}\n'
     fi
+    ;;
+
+  probe)
+    host=$(printf '%s' "$q" | sed -n 's/.*host=\([^&]*\).*/\1/p' | sed 's/%2E/./g')
+    [ -z "$host" ] && { printf 'Content-Type: application/json\n\n{"ok":false,"error":"нет host"}\n'; exit 0; }
+    case "$host" in
+      *[0-9].[0-9]*) URL="http://$host/" ;;
+      *) URL="https://$host/" ;;
+    esac
+    RES=$(/opt/bin/curl -s -o /dev/null --max-time 7 -w "%{http_code} %{time_total}" "$URL" 2>/dev/null)
+    CODE=$(printf '%s' "$RES" | awk '{print $1}')
+    SEC=$(printf '%s' "$RES" | awk '{print $2}')
+    [ -z "$CODE" ] && CODE=0
+    [ -z "$SEC" ] && SEC=0
+    printf 'Content-Type: application/json\n\n{"ok":true,"code":"%s","sec":"%s"}\n' "$CODE" "$SEC"
     ;;
 
   myip)

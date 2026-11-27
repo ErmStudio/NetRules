@@ -311,11 +311,13 @@ button.primary:hover{box-shadow:0 12px 30px rgba(79,140,255,.5)}
   <div id="rule-modal" style="display:none;position:fixed;inset:0;background:rgba(4,8,16,.72);z-index:20;place-items:center">
     <div class="card" style="max-width:440px;width:92%;padding:22px">
       <div class="k">Правило для домена</div>
-      <div style="margin:8px 0 16px;font-size:15px;word-break:break-all" id="rm-host">—</div>
+      <div style="margin:8px 0 6px;font-size:15px;word-break:break-all" id="rm-host">—</div>
+      <div class="h" id="rm-probe" style="min-height:18px;margin-bottom:12px"></div>
       <div class="acts" style="margin:0">
         <button class="primary" onclick="applyRule('proxy')">Через VPN</button>
         <button onclick="applyRule('direct')">Напрямую</button>
         <button onclick="applyRule('reject')">Блокировать</button>
+        <button onclick="probeHost()">Проверить напрямую</button>
         <button onclick="closeRule()">Отмена</button>
       </div>
     </div>
@@ -461,10 +463,12 @@ function loadNet(){
       var p=(x.policy||'').toUpperCase();
       var cls=p==='PROXY'?'pol-proxy':(p==='REJECT'?'pol-reject':'pol-direct');
       var warn=(x.stalled||0)>0;
-      return '<div class="srow'+(warn?' warn':'')+'">'
+      var info=warn?('висит '+(x.stallsec||0)+' с'):(x.n+' соед');
+      var tip=(x.rule?('правило: '+x.rule+' · '):'')+'соединений: '+x.n;
+      return '<div class="srow'+(warn?' warn':'')+'" title="'+tip+'">'
         +'<span class="nm" style="cursor:pointer" onclick="openRule(\''+x.host+'\')">'
         +(warn?'⚠ ':'')+x.host+'</span>'
-        +'<span class="pol '+cls+'">'+p+'</span><span>'+x.n+(warn?' · висит '+x.stalled:'')+'</span></div>';
+        +'<span class="pol '+cls+'">'+p+'</span><span>'+info+'</span></div>';
     }).join('')||'<div class="srow"><span class="nm">нет соединений</span></div>';
     $('#net-domains').innerHTML=dm;
   }).catch(function(){});
@@ -626,9 +630,21 @@ function renameDevice(ip,cur){
   if(n===null) return;
   api('action=rename_device&ip='+encodeURIComponent(ip)+'&name='+encodeURIComponent(n)).then(function(){ loadNet(); });
 }
-function openRule(host){
+function probeHost(){
+  var box=$('#rm-probe');
+  box.textContent='проверяю…';
+  api('action=probe&host='+encodeURIComponent(ruleHost)).then(function(d){
+    if(!d||!d.ok){ box.textContent='не удалось проверить'; return; }
+    var code=parseInt(d.code,10);
+    if(code>=200&&code<400){ box.style.color='#34d399'; box.textContent='доступен: HTTP '+code+' за '+Math.round(d.sec*1000)+' мс'; }
+    else if(code===0){ box.style.color='#f87171'; box.textContent='не отвечает (таймаут) — похоже на блокировку'; }
+    else { box.style.color='#fbbf24'; box.textContent='ответил HTTP '+code+' за '+Math.round(d.sec*1000)+' мс'; }
+  }).catch(function(){ box.textContent='ошибка проверки'; });
+}function openRule(host){
   ruleHost=host;
   $('#rm-host').textContent=host;
+  $('#rm-probe').textContent='';
+  $('#rm-probe').style.color='';
   $('#rule-modal').style.display='grid';
 }
 function closeRule(){ $('#rule-modal').style.display='none'; }
