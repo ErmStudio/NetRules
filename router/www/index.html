@@ -63,6 +63,8 @@ pre{margin:0;background:#060b14;border:1px solid var(--line);border-radius:12px;
 .hidden{display:none}
 .srow{display:flex;justify-content:space-between;gap:12px;padding:8px 12px;border-radius:9px;font-size:12.5px;color:#c3d3ea;background:rgba(255,255,255,.03);margin-bottom:6px}
 .mini{padding:5px 10px;font-size:11px;border-radius:8px;white-space:nowrap}
+.card.compact{padding:12px 14px;border-radius:13px}
+.card.compact .srow{padding:6px 10px;margin-bottom:4px}
 .seg{display:flex;gap:2px;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:9px;padding:2px}
 .seg button{background:transparent;border:0;color:var(--dim);font-size:11px;padding:4px 9px;border-radius:7px;cursor:pointer;min-width:0}
 .seg button.active{background:rgba(79,140,255,.22);color:#cfe0ff}
@@ -96,6 +98,8 @@ body.light h1{background:linear-gradient(90deg,#12203a,#2a5cc4);-webkit-backgrou
 body.light pre,body.light textarea{background:#f7faff;color:#26364f;border-color:rgba(20,40,80,.13)}
 body.light .srow{background:rgba(20,40,80,.045);color:#26364f}
 body.light .mini{padding:5px 10px;font-size:11px;border-radius:8px;white-space:nowrap}
+.card.compact{padding:12px 14px;border-radius:13px}
+.card.compact .srow{padding:6px 10px;margin-bottom:4px}
 .seg{display:flex;gap:2px;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:9px;padding:2px}
 .seg button{background:transparent;border:0;color:var(--dim);font-size:11px;padding:4px 9px;border-radius:7px;cursor:pointer;min-width:0}
 .seg button.active{background:rgba(79,140,255,.22);color:#cfe0ff}
@@ -317,25 +321,26 @@ button.primary:hover{box-shadow:0 12px 30px rgba(79,140,255,.5)}
         <div class="k" style="margin-bottom:8px">Трафик по дням</div>
         <div id="td-list"><div class="srow"><span class="nm">пока нет данных — учёт идёт каждые 15 минут</span></div></div>
       </div>
+
+      <div class="card compact">
+        <div class="k" style="margin-bottom:8px">Обновление NetRules</div>
+        <div class="srow"><span class="nm" id="upd-state">проверяю версию…</span><button onclick="checkVersion(true)" style="padding:5px 10px;font-size:11.5px">Проверить</button></div>
+        <div class="acts" style="margin:8px 0 0"><button class="primary" id="btn-update" style="display:none;padding:7px 12px;font-size:12px" onclick="doUpdate()">Обновить</button></div>
+      </div>
+
+      <div class="card compact">
+        <div class="k" style="margin-bottom:8px">О проекте</div>
+        <div class="srow"><span class="nm">NetRules <span id="about-ver"></span> · MIT</span><a href="https://github.com/EugeneErmakov/NetRules" target="_blank" rel="noopener" style="text-decoration:none"><button class="mini">⭐ GitHub</button></a></div>
+        <div class="h" style="margin-top:6px;white-space:normal;font-size:11.5px">Поставьте звезду — лучшая благодарность автору.</div>
+      </div>
     </div>
-    <div class="card" style="margin-top:14px">
+
+    <div class="card compact">
       <div class="k" style="margin-bottom:8px">Уведомления в Telegram</div>
-      <div class="srow"><span class="nm" id="tg-state">проверяю…</span><button onclick="tgTest()" style="padding:6px 12px;font-size:12px">Тест</button></div>
-      <div class="h" style="margin-top:8px;white-space:normal">Чтобы включить, добавьте в <code>/opt/etc/mihomo/ui.conf</code> строки<br><code>TG_TOKEN="токен бота"</code> и <code>TG_CHAT="ваш chat id"</code></div>
+      <div class="srow"><span class="nm" id="tg-state">проверяю…</span><button onclick="tgTest()" style="padding:5px 10px;font-size:11.5px">Тест</button></div>
+      <div class="h" style="margin-top:6px;white-space:normal;font-size:11.5px">Включить: добавьте в <code>/opt/etc/mihomo/ui.conf</code> строки <code>TG_TOKEN="…"</code> и <code>TG_CHAT="…"</code></div>
     </div>
   </section>
-
-    <div class="card" style="margin-top:14px">
-      <div class="k" style="margin-bottom:8px">Обновление NetRules</div>
-      <div class="srow"><span class="nm" id="upd-state">проверяю версию…</span><button onclick="checkVersion(true)" style="padding:6px 12px;font-size:12px">Проверить</button></div>
-      <div class="acts" style="margin:10px 0 0"><button class="primary" id="btn-update" style="display:none" onclick="doUpdate()">Обновить</button></div>
-    </div>
-
-    <div class="card" style="margin-top:14px">
-      <div class="k" style="margin-bottom:8px">О проекте</div>
-      <div class="srow"><span class="nm">NetRules — открытый проект под MIT</span><a href="https://github.com/EugeneErmakov/NetRules" target="_blank" rel="noopener" style="text-decoration:none"><button class="mini">⭐ GitHub</button></a></div>
-      <div class="h" style="margin-top:8px;white-space:normal">Понравилось? Поставьте звезду на GitHub — лучшая благодарность автору.</div>
-    </div>
 
   <!-- МОДАЛКА ПРАВИЛА -->
   <div id="rule-modal" style="display:none;position:fixed;inset:0;background:rgba(4,8,16,.72);z-index:20;place-items:center">
