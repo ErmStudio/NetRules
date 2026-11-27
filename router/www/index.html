@@ -324,18 +324,22 @@ button.primary:hover{box-shadow:0 12px 30px rgba(79,140,255,.5)}
 
       
       <div class="card wide" style="padding:12px 14px">
-        <div class="k" style="margin-bottom:8px">Период обновления подписки</div>
-        <div class="rowline">
-          <span class="seg" id="sub-mode">
+        <div class="k" style="margin-bottom:8px">Обновление подписки</div>
+        <div class="rowline" style="gap:10px">
+          <label class="sw"><input type="checkbox" id="t-autosub"><span class="sl"></span></label>
+          <span style="font-size:12.5px">автообновление</span>
+          <span class="seg" id="sub-mode" style="margin-left:auto">
             <button data-h="1">1 ч</button>
             <button data-h="2">2 ч</button>
             <button data-h="4">4 ч</button>
             <button data-h="6">6 ч</button>
             <button data-h="12">12 ч</button>
           </span>
-          <span class="h" id="sub-cur" style="margin-left:auto;font-size:11.5px;color:var(--dim)"></span>
         </div>
+        <div class="h" id="sub-cur" style="margin-top:6px;font-size:11.5px;color:var(--dim)"></div>
       </div>
+
+      
 
       <div class="card tog">
         <div><h3>Прокси</h3><p>Telegram, ChatGPT и остальные заблокированные — через прокси</p></div>
@@ -362,11 +366,6 @@ button.primary:hover{box-shadow:0 12px 30px rgba(79,140,255,.5)}
       <div class="card tog">
         <div><h3>Уведомления в Telegram</h3><p>Сбои, переключения узлов, обновления</p></div>
         <label class="sw"><input type="checkbox" id="t-tg"><span class="sl"></span></label>
-      </div>
-
-      <div class="card tog">
-        <div><h3>Автообновление подписки</h3><p>Ежедневная проверка конфига в 06:00</p></div>
-        <label class="sw"><input type="checkbox" id="t-autosub"><span class="sl"></span></label>
       </div>
 
       <div class="card tog">
