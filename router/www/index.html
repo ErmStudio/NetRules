@@ -63,8 +63,9 @@ pre{margin:0;background:#060b14;border:1px solid var(--line);border-radius:12px;
 .hidden{display:none}
 .srow{display:flex;justify-content:space-between;gap:12px;padding:8px 12px;border-radius:9px;font-size:12.5px;color:#c3d3ea;background:rgba(255,255,255,.03);margin-bottom:6px}
 .mini{padding:5px 10px;font-size:11px;border-radius:8px;white-space:nowrap}
-.chk{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--dim);text-transform:none;letter-spacing:0;cursor:pointer}
-.chk input{accent-color:#4f8cff;width:14px;height:14px;cursor:pointer}
+.seg{display:flex;gap:2px;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:9px;padding:2px}
+.seg button{background:transparent;border:0;color:var(--dim);font-size:11px;padding:4px 9px;border-radius:7px;cursor:pointer;min-width:0}
+.seg button.active{background:rgba(79,140,255,.22);color:#cfe0ff}
 .srow.warn{background:rgba(248,113,113,.075);border-left:2px solid #f87171;border-radius:8px}
 #net-domains,#net-devices{max-height:340px;overflow-y:auto;overflow-x:hidden;padding-right:4px;scrollbar-width:thin;scrollbar-color:rgba(120,160,255,.45) transparent}
 #net-domains::-webkit-scrollbar,#net-devices::-webkit-scrollbar{width:6px}
@@ -95,8 +96,9 @@ body.light h1{background:linear-gradient(90deg,#12203a,#2a5cc4);-webkit-backgrou
 body.light pre,body.light textarea{background:#f7faff;color:#26364f;border-color:rgba(20,40,80,.13)}
 body.light .srow{background:rgba(20,40,80,.045);color:#26364f}
 body.light .mini{padding:5px 10px;font-size:11px;border-radius:8px;white-space:nowrap}
-.chk{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--dim);text-transform:none;letter-spacing:0;cursor:pointer}
-.chk input{accent-color:#4f8cff;width:14px;height:14px;cursor:pointer}
+.seg{display:flex;gap:2px;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:9px;padding:2px}
+.seg button{background:transparent;border:0;color:var(--dim);font-size:11px;padding:4px 9px;border-radius:7px;cursor:pointer;min-width:0}
+.seg button.active{background:rgba(79,140,255,.22);color:#cfe0ff}
 .srow.warn{background:rgba(248,113,113,.075);border-left:2px solid #f87171;border-radius:8px}
 #net-domains,#net-devices{max-height:340px;overflow-y:auto;overflow-x:hidden;padding-right:4px;scrollbar-width:thin;scrollbar-color:rgba(120,160,255,.45) transparent}
 #net-domains::-webkit-scrollbar,#net-devices::-webkit-scrollbar{width:6px}
@@ -299,7 +301,7 @@ button.primary:hover{box-shadow:0 12px 30px rgba(79,140,255,.5)}
     </div>
     <div class="col">
       <div class="card"><div class="k" style="margin-bottom:8px">Устройства <span style="text-transform:none;color:#5f6d85">— клик по имени, чтобы переименовать</span></div><div id="net-devices"><div class="srow"><span class="nm">—</span></div></div></div>
-      <div class="card"><div class="k" style="margin-bottom:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">Домены <span style="text-transform:none;color:#5f6d85">— клик: правило; ⚠ — блокировка</span><label class="chk" style="margin-left:auto"><input type="checkbox" id="f-stall"> только висящие</label>
+      <div class="card"><div class="k" style="margin-bottom:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">Домены <span style="text-transform:none;color:#5f6d85">— клик: правило; ⚠ — блокировка</span><div class="seg" id="f-mode" style="margin-left:auto"><button data-m="all" class="active">все</button><button data-m="stall">⚠ висящие</button><button data-m="ok">✓ здоровые</button></div>
           <button class="mini" onclick="bulkProxy()">Все ⚠ → VPN</button></div><div id="net-domains"><div class="srow"><span class="nm">—</span></div></div></div>
     </div>
   </section>
@@ -468,10 +470,12 @@ function animNum(el,to,fmt){
 }
 function renderDomains(){
   var all=(lastConns&&lastConns.domains)||[];
-  var onlyStall=$('#f-stall')&&$('#f-stall').checked;
-  var list=onlyStall?all.filter(function(x){return (x.stalled||0)>0;}):all;
+  var list=all;
+  if(stallMode==='stall') list=all.filter(function(x){return (x.stalled||0)>0;});
+  if(stallMode==='ok') list=all.filter(function(x){return (x.stalled||0)===0;});
   if(!list.length){
-    $('#net-domains').innerHTML='<div class="srow"><span class="nm">'+(onlyStall?'висящих нет — всё чисто':'нет соединений')+'</span></div>';
+    var msg=stallMode==='stall'?'висящих нет — всё чисто':(stallMode==='ok'?'здоровых нет':'нет соединений');
+    $('#net-domains').innerHTML='<div class="srow"><span class="nm">'+msg+'</span></div>';
     return;
   }
   var html=list.map(function(x){
@@ -486,10 +490,14 @@ function renderDomains(){
       +(warn?'⚠ ':(suspect?'· ':''))+x.host+'</span>'
       +'<span class="pol '+cls+'">'+p+'</span><span>'+info+'</span></div>';
   }).join('');
-  if(onlyStall) html='<div class="srow" style="background:transparent;color:#8b9bb8">показано '+list.length+' из '+all.length+'</div>'+html;
+  if(stallMode!=='all'){
+    html='<div class="srow" style="background:transparent;color:#8b9bb8">показано '+list.length+' из '+all.length+'</div>'+html;
+  }
   $('#net-domains').innerHTML=html;
-}var lastDomains=[];
+}
+var lastDomains=[];
 var lastConns=null;
+var stallMode='all';
 function bulkProxy(){
   var hosts=(lastDomains||[]).filter(function(x){ return (x.stalled||0)>0 && (x.ok||0)===0 && (x.n||0)>=2; })
                                 .map(function(x){ return x.host; })
@@ -757,7 +765,13 @@ loadExit();
 show((location.hash||'#overview').slice(1));
 applyTheme((function(){try{return localStorage.getItem('nr-theme')||'dark';}catch(e){return 'dark';}})());
 $('#theme-btn').addEventListener('click',function(){applyTheme(document.body.classList.contains('light')?'dark':'light');});
-refresh(); loadHealth();
+Array.prototype.forEach.call(document.querySelectorAll('#f-mode button'),function(b){
+  b.addEventListener('click',function(){
+    stallMode=b.getAttribute('data-m');
+    Array.prototype.forEach.call(document.querySelectorAll('#f-mode button'),function(x){x.classList.toggle('active',x===b);});
+    renderDomains();
+  });
+});refresh(); loadHealth();
 setInterval(refresh,5000);
 setInterval(function(){ if(view==='logs') loadLog(); },10000);
 </script>
