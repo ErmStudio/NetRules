@@ -322,14 +322,7 @@ button.primary:hover{box-shadow:0 12px 30px rgba(79,140,255,.5)}
         <div><h3>ITX (второй провайдер)</h3><p>Резервная подписка через Xray: 8 узлов GB/PL/CZ</p></div>
         <label class="sw"><input type="checkbox" id="t-itx"><span class="sl"></span></label>
       </div>
-      <div class="card wide">
-        <div class="k">Узел ITX (для Gemini)</div>
-        <div class="rowline" style="margin-top:8px">
-          <select id="itx-sel" style="flex:1;min-width:0;background:rgba(255,255,255,.05);color:var(--fg);border:1px solid var(--line);border-radius:9px;padding:8px 10px;font-size:12.5px"></select>
-          <button onclick="pickItx()" style="padding:8px 14px;font-size:12.5px">Применить</button>
-        </div>
-        <div class="h" id="itx-cur" style="margin-top:6px;font-size:11.5px;color:var(--dim)"></div>
-      </div>
+      
 
 
       <div class="card tog">
@@ -340,6 +333,16 @@ button.primary:hover{box-shadow:0 12px 30px rgba(79,140,255,.5)}
         <div><h3>Соцсети через прокси</h3><p>Instagram, Facebook, WhatsApp — через прокси</p></div>
         <label class="sw"><input type="checkbox" id="t-social"><span class="sl"></span></label>
       </div>
+      <div class="card tog">
+        <div><h3>Уведомления в Telegram</h3><p>Сбои, переключения узлов, обновления</p></div>
+        <label class="sw"><input type="checkbox" id="t-tg"><span class="sl"></span></label>
+      </div>
+
+      <div class="card tog">
+        <div><h3>Автообновление подписки</h3><p>Ежедневная проверка конфига в 06:00</p></div>
+        <label class="sw"><input type="checkbox" id="t-autosub"><span class="sl"></span></label>
+      </div>
+
       <div class="card tog">
         <div><h3>Google видео</h3><p>YouTube и Google Photos — через прокси</p></div>
         <label class="sw"><input type="checkbox" id="t-video"><span class="sl"></span></label>
@@ -715,6 +718,7 @@ function refresh(){
     if($('#t-itx')) $('#t-itx').checked=!!s.itx;
     if($('#t-google')) $('#t-google').checked=!!s.google_itx;
     if($('#t-tg')) $('#t-tg').checked=!!s.tg_notify;
+    if($('#t-autosub')) $('#t-autosub').checked=!!s.autosub;
   }).catch(function(){});
 }
 
@@ -814,6 +818,19 @@ function loadItx(){
     if(c) c.textContent='сейчас: '+(d.now||'—');
   }).catch(function(){});
 }
+function testGemini(){
+  window.open('https://gemini.google.com/app','_blank');
+}
+function blockItx(){
+  var s=document.getElementById('itx-sel');
+  if(!s) return;
+  var v=s.value;
+  if(!confirm('Исключить узел «'+v+'» из модуля?')) return;
+  api('action=itx_block&name='+encodeURIComponent(v)).then(function(d){
+    if(d&&d.ok){ toast('Узел исключён, пересобираю…'); setTimeout(loadItx,7000); }
+    else toast('не удалось');
+  }).catch(function(){ toast('ошибка'); });
+}
 function pickItx(){
   var s=document.getElementById('itx-sel');
   if(!s) return;
@@ -837,6 +854,7 @@ function bindPair(id,onAct,offAct,onTxt,offTxt){
 bindPair('#t-itx','itx_on','itx_off','ITX включён','ITX выключен');
 bindPair('#t-google','google_itx_on','google_itx_off','Google через ITX','Google напрямую');
 bindPair('#t-tg','tg_notify_on','tg_notify_off','Уведомления включены','Уведомления выключены');
+bindPair('#t-autosub','autosub_on','autosub_off','Автообновление включено','Автообновление выключено');
 
 var logFile='mihomo';
 function setLog(f){
@@ -1014,4 +1032,15 @@ setInterval(function(){ if(view==='logs') loadLog(); },10000);
 setInterval(function(){ if(view==='speed'){ loadHealth(); loadSpeed(); } },15000);
 </script>
 </body>
-</html>
+</html><div class="card wide" style="margin-top:14px">
+      <div class="k">Узел ITX (для Gemini)</div>
+      <div class="rowline" style="margin-top:8px;gap:8px">
+        <select id="itx-sel" style="flex:1;min-width:0"></select>
+        <button onclick="pickItx()" style="padding:8px 14px;font-size:12.5px">Применить</button>
+        <button onclick="testGemini()" style="padding:8px 14px;font-size:12.5px" title="Открыть Gemini в новой вкладке">Проверить</button>
+        <button onclick="blockItx()" style="padding:8px 12px;font-size:12.5px" title="Исключить узел из модуля">В блэклист</button>
+      </div>
+      <div class="h" id="itx-cur" style="margin-top:6px;font-size:11.5px;color:var(--dim)"></div>
+    </div>
+
+  

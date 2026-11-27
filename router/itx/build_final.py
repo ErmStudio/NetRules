@@ -11,6 +11,15 @@ OUT_PROXIES = "/opt/etc/mihomo/itx-proxies.yaml"
 OUT_LIST = os.path.join(BASE, "nodes.txt")
 PORT0 = 21100
 LIMIT = int(os.environ.get("ITX_NODES", "30"))
+BLOCK_ADDR = set()
+try:
+    for _l in open("/opt/etc/itx/blocklist.txt"):
+        _l = _l.strip()
+        if _l:
+            BLOCK_ADDR.add(_l)
+except FileNotFoundError:
+    pass
+
 BLOCKED = {"RU", "BY", "XX", "IR", "KP", "CN", "SY", "CU", "TM", "AF"}
 
 geo = {}
@@ -28,6 +37,8 @@ for port, (loc, lat) in geo.items():
     if port not in meta:
         continue
     if loc in BLOCKED or lat >= 3.0:
+        continue
+    if meta[port].get("addr") in BLOCK_ADDR:
         continue
     cands.append((lat, port, loc))
 cands.sort()
@@ -56,7 +67,7 @@ for i, (lat, port, loc) in enumerate(chosen):
     name = "ITX-%02d %s %.0fms" % (i + 1, loc, lat * 1000)
     proxies.append({"name": name, "type": "socks5", "server": "127.0.0.1",
                     "port": inb_port, "udp": False})
-    names.append("%s|%s|%s" % (name, inb_port, (meta[port]["name"] or "")[:40]))
+    names.append("%s|%s|%s|%s" % (name, inb_port, (meta[port]["name"] or "")[:40], meta[port].get("addr", "")))
 
 cfg = {"log": {"loglevel": "warning"}, "inbounds": inbounds,
        "outbounds": outbounds, "routing": {"domainStrategy": "AsIs", "rules": routing}}

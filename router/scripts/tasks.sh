@@ -42,7 +42,7 @@ while true; do
   if [ "$H" = "06" ] && [ "$D" != "$(cat $BASE/.last_sub 2>/dev/null)" ]; then
     echo "$D" > $BASE/.last_sub
     echo "$(date '+%F %T') задача: обновление подписки" >> $LOG
-    /opt/etc/mihomo/update.sh
+    [ "${AUTO_SUB:-1}" = "1" ] && /opt/etc/mihomo/update.sh
   fi
 
   # 05:10 ежедневно — бэкап конфигов

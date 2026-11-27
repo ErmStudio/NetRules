@@ -26,6 +26,7 @@ video_on=0; grep -q 'googlevideo' "$RULES" 2>/dev/null && video_on=1
 social_on=0; grep -q 'DOMAIN-SUFFIX,instagram.com' "$RULES" 2>/dev/null && social_on=1
 itx_up=0; [ -f /opt/var/run/itx.pid ] && kill -0 "$(cat /opt/var/run/itx.pid 2>/dev/null)" 2>/dev/null && itx_up=1
 google_itx=0; grep -q "gemini.google.com" /opt/etc/mihomo/rules-itx.yaml 2>/dev/null && google_itx=1
+autosub=0; . /opt/etc/mihomo/ui.conf 2>/dev/null; [ "${AUTO_SUB:-1}" = "1" ] && autosub=1
 tg_notify=0; . /opt/etc/mihomo/ui.conf 2>/dev/null; [ "${TG_NOTIFY:-1}" = "1" ] && tg_notify=1
 zapret_up=0; ps 2>/dev/null | grep -q '[n]fqws2' && zapret_up=1
 nodes=$(grep -c '^    server: ' "$CFG" 2>/dev/null); [ -z "$nodes" ] && nodes=0
@@ -96,8 +97,8 @@ case "$act" in
     [ -z "$load" ] && load=0
     [ -z "$mihomem" ] && mihomem=0
     tg=0; grep -q '^TG_TOKEN="..' /opt/etc/mihomo/ui.conf 2>/dev/null && tg=1
-    printf '{"mihomo":%s,"vpn":%s,"video":%s,"social":%s,"zapret":%s,"itx":%s,"google_itx":%s,"tg":%s,"tg_notify":%s,"nodes":%s,"last":"%s","uptime":%s,"memtotal":%s,"memavail":%s,"node":"%s","country":"%s","delay":"%s","mup":%s,"load":"%s","temp":%s,"mihomem":%s,"dl":%s,"ul":%s}\n' \
-      "$mihomo_up" "$vpn_on" "$video_on" "$social_on" "$zapret_up" "$itx_up" "$google_itx" "$tg_notify" "$tg" "$nodes" "$(esc "$lu")" "$up" "$memtot" "$memav" \
+    printf '{"mihomo":%s,"vpn":%s,"video":%s,"social":%s,"zapret":%s,"itx":%s,"google_itx":%s,"tg":%s,"tg_notify":%s,"autosub":%s,"nodes":%s,"last":"%s","uptime":%s,"memtotal":%s,"memavail":%s,"node":"%s","country":"%s","delay":"%s","mup":%s,"load":"%s","temp":%s,"mihomem":%s,"dl":%s,"ul":%s}\n' \
+      "$mihomo_up" "$vpn_on" "$video_on" "$social_on" "$zapret_up" "$itx_up" "$google_itx" "$tg" "$tg_notify" "$autosub" "$nodes" "$(esc "$lu")" "$up" "$memtot" "$memav" \
       "$(esc "$node")" "$(esc "$country")" "$(esc "$delay")" "$mup" "$(esc "$load")" "$temp" "$mihomem" "$dl" "$ul"
     ;;
 
@@ -427,6 +428,46 @@ print(json.dumps({'now': d.get('now') or '', 'all': d.get('all') or []}, ensure_
       printf '\nTG_NOTIFY="0"\n' >> "$CONF"
     fi
     printf 'Content-Type: application/json\n\n{"ok":true,"tg_notify":0}\n'
+    ;;
+
+  itx_block)
+    name=$(printf '%s' "$q" | sed -n 's/.*name=\([^&]*\).*/\1/p' | sed 's/%20/ /g;s/%2F/\//g')
+    ADDR=$(awk -F"|" -v n="$name" '$1==n{print $4; exit}' /opt/etc/itx/nodes.txt 2>/dev/null)
+    if [ -n "$ADDR" ]; then
+      grep -qx "$ADDR" /opt/etc/itx/blocklist.txt 2>/dev/null || echo "$ADDR" >> /opt/etc/itx/blocklist.txt
+      ( /opt/bin/python3 /opt/etc/itx/build_final.py >/dev/null 2>&1
+        /opt/etc/init.d/S95itx restart >/dev/null 2>&1
+        sleep 3
+        . /opt/etc/mihomo/ui.conf
+        /opt/bin/curl -s -o /dev/null --max-time 15 -X PUT -H "Authorization: Bearer $SECRET" \
+          -H "Content-Type: application/json" -d '{"path":"/opt/etc/mihomo/config.yaml"}' \
+          "http://127.0.0.1:9090/configs?force=false" ) >/dev/null 2>&1 &
+      printf 'Content-Type: application/json\n\n{"ok":true,"blocked":"%s","rebuild":true}\n' "$ADDR"
+    else
+      printf 'Content-Type: application/json\n\n{"ok":false,"error":"node not found"}\n'
+    fi
+    ;;
+
+  autosub_on)
+    CONF=/opt/etc/mihomo/ui.conf
+    touch "$CONF"
+    if grep -q '^AUTO_SUB=' "$CONF" 2>/dev/null; then
+      sed -i 's|^AUTO_SUB=.*|AUTO_SUB="1"|' "$CONF"
+    else
+      printf '\nAUTO_SUB="1"\n' >> "$CONF"
+    fi
+    printf 'Content-Type: application/json\n\n{"ok":true,"autosub":1}\n'
+    ;;
+
+  autosub_off)
+    CONF=/opt/etc/mihomo/ui.conf
+    touch "$CONF"
+    if grep -q '^AUTO_SUB=' "$CONF" 2>/dev/null; then
+      sed -i 's|^AUTO_SUB=.*|AUTO_SUB="0"|' "$CONF"
+    else
+      printf '\nAUTO_SUB="0"\n' >> "$CONF"
+    fi
+    printf 'Content-Type: application/json\n\n{"ok":true,"autosub":0}\n'
     ;;
 
   config)
