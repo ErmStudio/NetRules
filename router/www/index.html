@@ -64,7 +64,7 @@ pre{margin:0;background:#060b14;border:1px solid var(--line);border-radius:12px;
 .srow{display:flex;justify-content:space-between;gap:12px;padding:8px 12px;border-radius:9px;font-size:12.5px;color:#c3d3ea;background:rgba(255,255,255,.03);margin-bottom:6px}
 .mini{padding:5px 10px;font-size:11px;border-radius:8px;white-space:nowrap}
 .card.compact{padding:12px 14px;border-radius:13px}
-.speed-cards>.card{display:flex;flex-direction:column;justify-content:center;min-height:0;padding:9px 14px;gap:2px}
+.speed-cards>.card{display:flex;flex-direction:column;justify-content:flex-start;min-height:0;padding:11px 14px;gap:2px}
 .speed-cards .big{font-size:25px;line-height:1.05}
 .speed-cards .lbl{font-size:10.5px;margin-top:1px}
 .speedrow{gap:8px}
@@ -134,7 +134,7 @@ body.light pre,body.light textarea{background:#f7faff;color:#26364f;border-color
 body.light .srow{background:rgba(20,40,80,.045);color:#26364f}
 body.light .mini{padding:5px 10px;font-size:11px;border-radius:8px;white-space:nowrap}
 .card.compact{padding:12px 14px;border-radius:13px}
-.speed-cards>.card{display:flex;flex-direction:column;justify-content:center;min-height:0;padding:9px 14px;gap:2px}
+.speed-cards>.card{display:flex;flex-direction:column;justify-content:flex-start;min-height:0;padding:11px 14px;gap:2px}
 .speed-cards .big{font-size:25px;line-height:1.05}
 .speed-cards .lbl{font-size:10.5px;margin-top:1px}
 .speedrow{gap:8px}
@@ -339,6 +339,7 @@ button.primary:hover{box-shadow:0 12px 30px rgba(79,140,255,.5)}
   <section id="view-speed" class="hidden">
     <div class="col speed-cards">
       <div class="card compact">
+        <div class="k" style="margin-bottom:8px">Состояние узлов</div>
         <div class="health" style="align-items:flex-end;gap:26px">
           <div><div class="big ok" id="hs-alive">—</div><div class="lbl">живых</div></div>
           <div><div class="big bad" id="hs-dead">—</div><div class="lbl">мёртвых</div></div>
@@ -348,7 +349,7 @@ button.primary:hover{box-shadow:0 12px 30px rgba(79,140,255,.5)}
       </div>
 
       <div class="card compact">
-        <div class="lbl" style="font-size:11px;opacity:.75;margin-bottom:6px">период автопроверки</div>
+        <div class="k" style="margin-bottom:8px">Период автопроверки</div>
         <div class="speedrow">
           <span class="seg" id="int-mode">
             <button data-h="1">1 ч</button>
