@@ -385,10 +385,27 @@ print(json.dumps(out, ensure_ascii=False))
     ;;
 
   traffic_daily)
-    F=/opt/etc/mihomo/traffic_daily.csv
-    printf 'Content-Type: application/json\n\n{"rows":['
-    tail -n 30 "$F" 2>/dev/null | awk -F',' 'BEGIN{f=1} NF==3 {printf "%s[\"%s\",%s,%s]", (f?"":","), $1, $2, $3; f=0}'
-    printf ']}\n'
+    printf 'Content-Type: application/json\n\n'
+    /opt/bin/python3 -c "
+import collections, json
+agg = collections.OrderedDict()
+try:
+    for line in open('/opt/etc/mihomo/traffic.csv', encoding='utf-8'):
+        p = line.strip().split(',')
+        if len(p) != 3:
+            continue
+        d, dl, ul = p
+        try:
+            dl = int(dl); ul = int(ul)
+        except Exception:
+            continue
+        a = agg.setdefault(d, [0, 0])
+        a[0] += dl; a[1] += ul
+except FileNotFoundError:
+    pass
+rows = [[k, v[0], v[1]] for k, v in sorted(agg.items())][-30:]
+print(json.dumps({'rows': rows}, ensure_ascii=False))
+"
     ;;
 
   notify_test)

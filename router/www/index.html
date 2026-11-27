@@ -315,7 +315,7 @@ button.primary:hover{box-shadow:0 12px 30px rgba(79,140,255,.5)}
       </div>
       <div class="card">
         <div class="k" style="margin-bottom:8px">Трафик по дням</div>
-        <div id="td-list"><div class="srow"><span class="nm">пока нет данных — срез делается в 00:00</span></div></div>
+        <div id="td-list"><div class="srow"><span class="nm">пока нет данных — учёт идёт каждые 15 минут</span></div></div>
       </div>
     </div>
     <div class="card" style="margin-top:14px">
@@ -726,7 +726,7 @@ function loadTrafficDaily(){
   var box=$('#td-list');
   api('action=traffic_daily').then(function(d){
     var rows=(d&&d.rows)||[];
-    if(!rows.length){ box.innerHTML='<div class="srow"><span class="nm">пока нет данных — срез делается в 00:00</span></div>'; return; }
+    if(!rows.length){ box.innerHTML='<div class="srow"><span class="nm">пока нет данных — учёт идёт каждые 15 минут</span></div>'; return; }
     var max=1; rows.forEach(function(r){ if((r[1]+r[2])>max) max=r[1]+r[2]; });
     box.innerHTML=rows.slice(-10).map(function(r){
       var total=r[1]+r[2], pct=Math.max(3,Math.round(total/max*100));
