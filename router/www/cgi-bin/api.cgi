@@ -175,6 +175,345 @@ case "$act" in
     printf 'Content-Type: application/json\n\n'
     cat /opt/etc/mihomo/speedtest.json 2>/dev/null || printf '{"ok":false}\n'
     ;;
+
+  conns)
+    printf 'Content-Type: application/json\n\n'
+    if [ "$mihomo_up" = "1" ]; then
+      ND=$(ndmc -c "show ip dhcp bindings" 2>/dev/null | tr -d '\033' | sed 's/\[K//g')
+      printf '%s\n' "$ND" | awk '
+        /^ *ip:/ { ip=$2 }
+        /^ *hostname:/ { if (ip != "") { print ip "|" $2; ip="" } }
+      ' > /tmp/dhcp-names.txt 2>/dev/null
+      /opt/bin/curl -s --max-time 8 -H "$AUTH" "$API/connections" 2>/dev/null | /opt/bin/python3 -c "
+import sys, json, collections
+from datetime import datetime, timezone
+try:
+    d = json.load(sys.stdin)
+except Exception:
+    print('{\"total\":0,\"devices\":[],\"domains\":[]}')
+    raise SystemExit
+names = {}
+for src in ('/tmp/dhcp-names.txt', '/opt/etc/mihomo/device-names.txt'):
+    try:
+        for line in open(src, encoding='utf-8'):
+            if '|' in line:
+                k, v = line.rstrip('\n').split('|', 1)
+                if v.strip():
+                    names[k.strip()] = v.strip()
+    except Exception:
+        pass
+
+def age_sec(x):
+    s = x.get('start') or ''
+    try:
+        t = datetime.fromisoformat(s.replace('Z', '+00:00'))
+        return (datetime.now(timezone.utc) - t).total_seconds()
+    except Exception:
+        return 0
+
+c = d.get('connections') or []
+dev = collections.Counter(); dom = collections.Counter(); dl = collections.Counter()
+pol = collections.defaultdict(collections.Counter)
+stall = collections.Counter(); stallage = collections.defaultdict(float); okc = collections.Counter()
+rules = collections.defaultdict(collections.Counter)
+for x in c:
+    m = x.get('metadata') or {}
+    ip = m.get('sourceIP') or '?'
+    h = m.get('host') or m.get('sniffHost') or m.get('destinationIP') or '?'
+    dev[ip] += 1; dom[h] += 1
+    down = x.get('download') or 0
+    up = x.get('upload') or 0
+    dl[ip] += down
+    ch = x.get('chains') or []
+    p = 'PROXY' if 'PROXY' in ch else (ch[0] if ch else '?')
+    pol[h][p] += 1
+    r = x.get('rule') or ''
+    rp = x.get('rulePayload') or ''
+    if r:
+        rules[h][r + ('/' + rp if rp else '')] += 1
+    a = age_sec(x)
+    if down > 0:
+        okc[h] += 1
+    elif up > 100 and a > 6:
+        stall[h] += 1
+        if a > stallage[h]:
+            stallage[h] = a
+
+doms = sorted(dom.items(), key=lambda kv: (-stall[kv[0]], -kv[1]))[:20]
+out = {
+  'total': len(c),
+  'up': d.get('uploadTotal', 0),
+  'down': d.get('downloadTotal', 0),
+  'devices': [{'ip': k, 'name': names.get(k, ''), 'n': v, 'dl': dl[k]} for k, v in dev.most_common(10)],
+  'domains': [{
+      'host': k, 'n': v,
+      'policy': pol[k].most_common(1)[0][0],
+      'rule': rules[k].most_common(1)[0][0] if rules[k] else '',
+      'stalled': stall[k],
+      'ok': okc[k],
+      'stallsec': int(stallage[k]),
+  } for k, v in doms],
+}
+print(json.dumps(out, ensure_ascii=False))
+"
+    else
+      printf '{"total":0,"devices":[],"domains":[]}\n'
+    fi
+    ;;
+
+  bulk_proxy)
+    hosts=$(printf '%s' "$q" | sed -n 's/.*hosts=\([^&]*\).*/\1/p' | sed 's/%2C/,/g;s/%2E/./g')
+    added=0; skipped=0; OLDIFS=$IFS; IFS=','
+    for h in $hosts; do
+      [ -z "$h" ] && continue
+      case "$h" in
+        *[A-Za-z]*) ;;
+        *) skipped=$((skipped+1)); continue ;;
+      esac
+      if grep -q "DOMAIN-SUFFIX,$h\$" "$RULES" 2>/dev/null; then continue; fi
+      sed -i "s|^  # === SOCIAL-BEGIN ===|  - DOMAIN-SUFFIX,$h\n\n  # === SOCIAL-BEGIN ===|" "$RULES"
+      added=$((added+1))
+    done
+    IFS=$OLDIFS
+    reload_rules
+    printf 'Content-Type: application/json\n\n{"ok":true,"added":%s,"skipped":%s}\n' "$added" "$skipped"
+    ;;
+
+  probe)
+    host=$(printf '%s' "$q" | sed -n 's/.*host=\([^&]*\).*/\1/p' | sed 's/%2E/./g')
+    [ -z "$host" ] && { printf 'Content-Type: application/json\n\n{"ok":false,"error":"нет host"}\n'; exit 0; }
+    case "$host" in
+      *[0-9].[0-9]*) URL="http://$host/" ;;
+      *) URL="https://$host/" ;;
+    esac
+    RES=$(/opt/bin/curl -s -o /dev/null --max-time 7 -w "%{http_code} %{time_total}" "$URL" 2>/dev/null)
+    CODE=$(printf '%s' "$RES" | awk '{print $1}')
+    SEC=$(printf '%s' "$RES" | awk '{print $2}')
+    [ -z "$CODE" ] && CODE=0
+    [ -z "$SEC" ] && SEC=0
+    printf 'Content-Type: application/json\n\n{"ok":true,"code":"%s","sec":"%s"}\n' "$CODE" "$SEC"
+    ;;
+
+  version)
+    LOCAL=$(cat /opt/etc/mihomo/VERSION 2>/dev/null | tr -d '\r\n')
+    [ -z "$LOCAL" ] && LOCAL="0.0.0"
+    REMOTE=$(/opt/bin/curl -s --max-time 20 "https://raw.githubusercontent.com/ErmStudio/NetRules/main/VERSION" 2>/dev/null | tr -d '\r\n ')
+    if [ -z "$REMOTE" ]; then
+      printf 'Content-Type: application/json\n\n{"ok":false,"local":"%s","error":"нет связи с GitHub"}\n' "$LOCAL"
+      exit 0
+    fi
+    if [ "$LOCAL" = "$REMOTE" ]; then
+      UPD=false
+    else
+      NEW=$(printf '%s\n%s\n' "$LOCAL" "$REMOTE" | sort -V | tail -1)
+      if [ "$NEW" = "$REMOTE" ]; then UPD=true; else UPD=false; fi
+    fi
+    printf 'Content-Type: application/json\n\n{"ok":true,"local":"%s","remote":"%s","update":%s}\n' "$LOCAL" "$REMOTE" "$UPD"
+    ;;
+
+  self_update)
+    printf 'Content-Type: application/json\n\n'
+    if [ -f /tmp/netrules-updating ]; then
+      printf '{"ok":false,"error":"обновление уже идёт"}\n'
+      exit 0
+    fi
+    touch /tmp/netrules-updating
+    /bin/sh /opt/etc/mihomo/netrules_update.sh >/dev/null 2>&1
+    RC=$?
+    rm -f /tmp/netrules-updating
+    if [ -f /opt/etc/mihomo/update_result.json ]; then
+      cat /opt/etc/mihomo/update_result.json
+    else
+      printf '{"ok":false,"error":"нет результата (код %s)"}\n' "$RC"
+    fi
+    ;;
+
+  update_log)
+    printf 'Content-Type: application/json\n\n'
+    printf '{"log":%s}\n' "$(jstr "$(tail -n 40 /opt/var/log/netrules-update.log 2>/dev/null)")"
+    ;;
+
+  set_interval)
+    h=$(printf '%s' "$q" | sed -n 's/.*hours=\([0-9]*\).*/\1/p')
+    case "$h" in 0|1|2|3|4|6|8|12|24) ;; *) h=3 ;; esac
+    CONF=/opt/etc/mihomo/ui.conf
+    touch "$CONF"
+    if grep -q '^SPEEDTEST_EVERY_H=' "$CONF" 2>/dev/null; then
+      sed -i "s|^SPEEDTEST_EVERY_H=.*|SPEEDTEST_EVERY_H=\"$h\"|" "$CONF"
+    else
+      printf '\nSPEEDTEST_EVERY_H="%s"\n' "$h" >> "$CONF"
+    fi
+    ( sleep 1
+      kill "$(cat /opt/var/run/mihomo-tasks.pid 2>/dev/null)" 2>/dev/null
+      rm -f /opt/var/run/mihomo-tasks.pid
+      /opt/etc/init.d/S97mihomo-autoupdate start >/dev/null 2>&1
+    ) >/dev/null 2>&1 &
+    printf 'Content-Type: application/json\n\n{"ok":true,"hours":%s}\n' "$h"
+    ;;
+  config)
+    VER=$(cat /opt/etc/mihomo/VERSION 2>/dev/null || echo "1.0.0")
+    MODEL=$(cat /proc/device-tree/model 2>/dev/null | tr -d '\000' | sed 's/ *$//')
+    [ -z "$MODEL" ] && MODEL="Keenetic"
+    MV=$(/opt/bin/curl -s --max-time 4 -H "Authorization: Bearer $SECRET" "$API/version" 2>/dev/null | sed -n 's/.*"version":"\([^"]*\)".*/\1/p' | head -1)
+    ZV=$(/opt/usr/bin/nfqws2 --version 2>/dev/null | sed -n 's/.*version v\([0-9.]*\).*/\1/p' | head -1)
+    PARTS="$MODEL"
+    [ -n "$MV" ] && PARTS="$PARTS · mihomo $MV"
+    [ -n "$ZV" ] && PARTS="$PARTS · zapret $ZV"
+    SUB="${SITE_SUBTITLE:-$PARTS}"
+    CONTACT="${CONTACT_URL:-https://github.com/ErmStudio/NetRules/issues/new}"
+    INTERVAL="${SPEEDTEST_EVERY_H:-3}"
+    tg=0; grep -q '^TG_TOKEN=.\+' /opt/etc/mihomo/ui.conf 2>/dev/null && tg=1
+    R_URL="${ROUTER_URL:-http://192.168.1.1/}"
+    Z_URL="${ZAPRET_URL:-http://192.168.1.1:90/}"
+    M_URL="${MIHOMO_UI_URL:-http://mihomo.lan:9090/ui/metacubexd/}"
+    printf 'Content-Type: application/json\n\n'
+    printf '{"router":"%s","zapret":"%s","mihomo":"%s","version":"%s","subtitle":"%s","contact":"%s","interval":"%s","tg":%s}\n' \
+      "$(esc "$R_URL")" "$(esc "$Z_URL")" "$(esc "$M_URL")" "$(esc "$VER")" "$(esc "$SUB")" "$(esc "$CONTACT")" "$(esc "$INTERVAL")" "$tg"
+    ;;
+  myip)
+    printf 'Content-Type: application/json\n\n'
+    R=""
+    for U in "https://ifconfig.co/json" "https://api.myip.com" "https://ipinfo.io/json"; do
+      R=$(/opt/bin/curl -s --max-time 10 --proxy "http://127.0.0.1:7890" "$U" 2>/dev/null)
+      case "$R" in
+        *rate*l*mit*|*429*|"") R="" ;;
+        \{*) break ;;
+        *) R="" ;;
+      esac
+    done
+    if [ -n "$R" ]; then printf '%s\n' "$R"; else printf '{"error":"сервисы не ответили"}\n'; fi
+    ;;
+
+  add_rule)
+    host=$(printf '%s' "$q" | sed -n 's/.*host=\([^&]*\).*/\1/p' | sed 's/%2E/./g;s/%2F/\//g')
+    pol=$(printf '%s' "$q" | sed -n 's/.*policy=\([a-z]*\).*/\1/p')
+    [ -z "$host" ] && { printf 'Content-Type: application/json\n\n{"ok":false,"error":"нет host"}\n'; exit 0; }
+    case "$pol" in proxy|direct|reject) ;; *) pol=proxy ;; esac
+    case "$pol" in
+      proxy)
+        grep -q "DOMAIN-SUFFIX,$host\$" "$RULES" 2>/dev/null || \
+          sed -i "s|^  # === SOCIAL-BEGIN ===|  - DOMAIN-SUFFIX,$host\n\n  # === SOCIAL-BEGIN ===|" "$RULES"
+        ;;
+      direct|reject)
+        UP=$(echo "$pol" | tr 'a-z' 'A-Z')
+        for f in /opt/etc/mihomo/config.yaml /opt/etc/mihomo/template.yaml; do
+          [ -f "$f" ] || continue
+          grep -q "DOMAIN-SUFFIX,$host,$UP" "$f" || \
+            sed -i "s|^rules:|rules:\n  - DOMAIN-SUFFIX,$host,$UP|" "$f"
+        done
+        ;;
+    esac
+    reload_config
+    printf 'Content-Type: application/json\n\n{"ok":true,"host":"%s","policy":"%s"}\n' "$host" "$pol"
+    ;;
+
+  rename_device)
+    ip=$(printf '%s' "$q" | sed -n 's/.*ip=\([0-9.]*\).*/\1/p')
+    nm=$(printf '%s' "$q" | sed -n 's/.*name=\([^&]*\).*/\1/p' | sed 's/%20/ /g;s/+/ /g')
+    CN=/opt/etc/mihomo/device-names.txt
+    [ -z "$ip" ] && { printf 'Content-Type: application/json\n\n{"ok":false}\n'; exit 0; }
+    touch "$CN"
+    grep -v "^$ip|" "$CN" > "$CN.tmp" 2>/dev/null; mv "$CN.tmp" "$CN" 2>/dev/null
+    [ -n "$nm" ] && echo "$ip|$nm" >> "$CN"
+    printf 'Content-Type: application/json\n\n{"ok":true}\n'
+    ;;
+
+  backups)
+    printf 'Content-Type: application/json\n\n{"items":['
+    first=1
+    for d in /storage/mihomo-backup/*/; do
+      [ -d "$d" ] || continue
+      n=$(basename "$d")
+      sz=$(du -sk "$d" 2>/dev/null | awk '{print $1}')
+      ts=$(stat -c %Y "$d" 2>/dev/null)
+      [ $first -eq 0 ] && printf ','
+      first=0
+      printf '{"name":"%s","kb":%s,"ts":%s}' "$n" "${sz:-0}" "${ts:-0}"
+    done
+    printf ']}\n'
+    ;;
+
+  restore)
+    d=$(printf '%s' "$q" | sed -n 's/.*dir=\([0-9]*\).*/\1/p')
+    B="/storage/mihomo-backup/$d"
+    if [ -n "$d" ] && [ -d "$B" ]; then
+      cp -f "$B"/* /opt/etc/mihomo/ 2>/dev/null
+      chmod +x /opt/etc/mihomo/*.sh 2>/dev/null
+      restart_bg
+      printf 'Content-Type: application/json\n\n{"ok":true}\n'
+    else
+      printf 'Content-Type: application/json\n\n{"ok":false,"error":"нет такой копии"}\n'
+    fi
+    ;;
+
+  history)
+    HIST=/opt/etc/mihomo/delay_history
+    printf 'Content-Type: application/json\n\n{"points":['
+    tail -n 60 "$HIST" 2>/dev/null | awk -F'|' 'BEGIN{f=1} NF==2 {printf "%s[%s,%s]", (f?"":","), $1, $2; f=0}'
+    printf ']}\n'
+    ;;
+
+  traffic_daily)
+    printf 'Content-Type: application/json\n\n'
+    /opt/bin/python3 -c "
+import collections, json
+agg = collections.OrderedDict()
+try:
+    for line in open('/opt/etc/mihomo/traffic.csv', encoding='utf-8'):
+        p = line.strip().split(',')
+        if len(p) != 3:
+            continue
+        d, dl, ul = p
+        try:
+            dl = int(dl); ul = int(ul)
+        except Exception:
+            continue
+        a = agg.setdefault(d, [0, 0])
+        a[0] += dl; a[1] += ul
+except FileNotFoundError:
+    pass
+rows = [[k, v[0], v[1]] for k, v in sorted(agg.items())][-30:]
+print(json.dumps({'rows': rows}, ensure_ascii=False))
+"
+    ;;
+
+  notify_test)
+    /bin/sh /opt/etc/mihomo/notify.sh "NetRules: тестовое уведомление ✅"
+    printf 'Content-Type: application/json\n\n{"ok":true}\n'
+    ;;
+
+  fullcheck)
+    ( /bin/sh /opt/etc/mihomo/fullcheck.sh >/dev/null 2>&1 & ) &
+    printf 'Content-Type: application/json\n\n{"ok":true,"started":true}\n'
+    ;;
+  nodecheck)
+    if [ "$mihomo_up" != "1" ]; then
+      printf 'Content-Type: application/json\n\n{"ok":false,"error":"mihomo не запущен"}\n'
+      exit 0
+    fi
+    /bin/sh /opt/etc/mihomo/checkall.sh >/dev/null 2>&1
+    RC=$?
+    if [ "$RC" = "2" ]; then
+      printf 'Content-Type: application/json\n\n{"ok":false,"error":"mihomo не готов, проверка отменена"}\n'
+      exit 0
+    fi
+    printf 'Content-Type: application/json\n\n'
+    cat /opt/etc/mihomo/nodes_health.json 2>/dev/null || printf '{"ok":false}\n'
+    ;;
+
+  health)
+    mup=0
+    if [ "$mihomo_up" = "1" ]; then
+      MP=$(ps 2>/dev/null | grep '[m]ihomo -d' | awk '{print $1}' | head -1)
+      if [ -n "$MP" ] && [ -r "/proc/$MP/stat" ]; then
+        ST=$(awk '{print $22}' /proc/$MP/stat 2>/dev/null)
+        UP=$(awk '{print int($1)}' /proc/uptime 2>/dev/null)
+        [ -n "$ST" ] && mup=$((UP - ST/100))
+      fi
+    fi
+    printf 'Content-Type: application/json\n\n'
+    cat /opt/etc/mihomo/nodes_health.json 2>/dev/null || printf '{"ok":false}\n'
+    ;;
   speed_last)
     mup=0
     if [ "$mihomo_up" = "1" ]; then
