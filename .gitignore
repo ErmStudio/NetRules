@@ -12,8 +12,12 @@ countries.txt
 nodes_health.json
 speedtest.json
 last_update.txt
-*.bak
+traffic.csv
+.traffic_state
 .last_*
+delay_history
+device-names.txt
+*.bak
 
 # логи и мусор
 *.log

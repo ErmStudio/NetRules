@@ -47,11 +47,15 @@ payload:
   - DOMAIN-SUFFIX,unrealengine.com
   - DOMAIN-SUFFIX,adobe.com
 
+
+  - DOMAIN-SUFFIX,ssp.optimo-media.ru
+
   # === SOCIAL-BEGIN ===
   # Соцсети Meta: по умолчанию через VPN (можно выключить в панели)
   # === SOCIAL-END ===
 
   # === VIDEO-BEGIN ===
+  - DOMAIN-SUFFIX,googlevideo.com
   # Видео Google (YouTube + Google Photos). Включается кнопкой в панели.
   # === VIDEO-END ===
 

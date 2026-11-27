@@ -259,9 +259,9 @@ button.primary:hover{box-shadow:0 12px 30px rgba(79,140,255,.5)}
       <button class="primary" onclick="act('update')">Обновить подписку</button>
       <button onclick="act('backup')" title="Копия конфигов и скриптов в /storage/mihomo-backup/ГГГГММДД, хранится 7 копий">Бэкап сейчас</button>
       <button onclick="act('restart')">Перезапустить mihomo</button>
-      <a href="http://192.168.1.1/" target="_blank" style="text-decoration:none"><button>Админка роутера ↗</button></a>
-      <a href="http://mihomo.lan:9090/ui/metacubexd/" target="_blank" style="text-decoration:none"><button>Панель mihomo ↗</button></a>
-      <a href="http://192.168.1.1:90/" target="_blank" style="text-decoration:none"><button>Панель zapret ↗</button></a>
+      <a id="lnk-router" href="http://192.168.1.1/" target="_blank" style="text-decoration:none"><button>Админка роутера ↗</button></a>
+      <a id="lnk-mihomo" href="http://mihomo.lan:9090/ui/metacubexd/" target="_blank" style="text-decoration:none"><button>Панель mihomo ↗</button></a>
+      <a id="lnk-zapret" href="http://192.168.1.1:90/" target="_blank" style="text-decoration:none"><button>Панель zapret ↗</button></a>
     </div>
   </section>
 
@@ -544,6 +544,14 @@ function loadExit(force){
     try{localStorage.setItem('nr-exit',JSON.stringify({cc:exitCC,ts:Date.now()}));}catch(e){}
   }).catch(function(){});
 }
+function loadCfg(){
+  api('action=config').then(function(c){
+    if(!c) return;
+    if(c.router && $('#lnk-router')) $('#lnk-router').href=c.router;
+    if(c.zapret && $('#lnk-zapret')) $('#lnk-zapret').href=c.zapret;
+    if(c.mihomo && $('#lnk-mihomo')) $('#lnk-mihomo').href=c.mihomo;
+  }).catch(function(){});
+}
 function refresh(){
   api('action=status').then(function(s){
     dot('#d-mihomo',s.mihomo);dot('#d-vpn',s.vpn);dot('#d-social',s.social);dot('#d-video',s.video);dot('#d-zapret',s.zapret);
@@ -771,7 +779,8 @@ Array.prototype.forEach.call(document.querySelectorAll('#f-mode button'),functio
     Array.prototype.forEach.call(document.querySelectorAll('#f-mode button'),function(x){x.classList.toggle('active',x===b);});
     renderDomains();
   });
-});refresh(); loadHealth();
+});loadCfg();
+refresh(); loadHealth();
 setInterval(refresh,5000);
 setInterval(function(){ if(view==='logs') loadLog(); },10000);
 </script>

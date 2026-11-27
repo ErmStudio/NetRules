@@ -1,4 +1,28 @@
-# Скопируйте в /opt/etc/mihomo/ui.conf и поменяйте секрет.
-# Секрет должен совпадать с "secret" в конфиге mihomo.
+# ============================================================
+#  NetRules — файл настроек
+#  Скопируйте этот файл в /opt/etc/mihomo/ui.conf и заполните.
+#  Права: chmod 600 /opt/etc/mihomo/ui.conf
+# ============================================================
+
+# --- mihomo API ---
+# Адрес внешнего контроллера mihomo (external-controller в config.yaml)
 MIHOMO_API="http://127.0.0.1:9090"
+# Секрет API — тот же, что "secret" в config.yaml
 MIHOMO_SECRET="change-me"
+
+# --- Ссылки в интерфейсе ---
+# Админка роутера
+ROUTER_URL="http://192.168.1.1/"
+# Веб-панель zapret (nfqws2-keenetic обычно на 90 порту)
+ZAPRET_URL="http://192.168.1.1:90/"
+# Панель mihomo (metacubexd / yacd)
+MIHOMO_UI_URL="http://mihomo.lan:9090/ui/metacubexd/"
+
+# --- Уведомления в Telegram (необязательно) ---
+# Создайте бота через @BotFather, узнайте chat_id через @userinfobot
+# TG_TOKEN="123456789:AAH..."
+# TG_CHAT="123456789"
+
+# --- Прочее ---
+# Интерфейс провайдера (для zapret, не для панели)
+# ISP_INTERFACE="eth3"

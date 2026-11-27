@@ -1,0 +1,23 @@
+NetRules
+Copyright (c) 2026 Eugene Ermakov (Ermstudio)
+
+This product includes software developed by Eugene Ermakov (Ermstudio).
+
+The MIT License (see LICENSE) requires that the above copyright notice and
+this permission notice be included in all copies or substantial portions of
+the Software.
+
+If you use, modify or redistribute this project, please keep the author
+attribution "Made by Ermstudio" in the interface footer or in the
+documentation, and link to the original repository:
+
+    https://github.com/EugeneErmakov/NetRules
+
+Third-party components used at runtime (not bundled):
+
+  - mihomo (Clash Meta)        https://github.com/MetaCubeX/mihomo
+  - zapret2 / nfqws2           https://github.com/bol-van/zapret2
+  - KeeneticOS / Entware       https://keenetic.com, https://entware.net
+  - metacubexd (mihomo UI)     https://github.com/MetaCubeX/metacubexd
+
+Their licenses remain in effect for those components.
