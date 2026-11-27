@@ -315,6 +315,15 @@ button.primary:hover{box-shadow:0 12px 30px rgba(79,140,255,.5)}
         <label class="sw"><input type="checkbox" id="t-zapret"><span class="sl"></span></label>
       </div>
       <div class="card tog">
+        <div><h3>ITX (второй провайдер)</h3><p>Резервная подписка через Xray: 8 узлов GB/PL/CZ</p></div>
+        <label class="sw"><input type="checkbox" id="t-itx"><span class="sl"></span></label>
+      </div>
+
+      <div class="card tog">
+        <div><h3>Google через ITX</h3><p>Gemini, AI Studio, NotebookLM — через узлы ITX</p></div>
+        <label class="sw"><input type="checkbox" id="t-google"><span class="sl"></span></label>
+      </div>
+      <div class="card tog">
         <div><h3>Соцсети через прокси</h3><p>Instagram, Facebook, WhatsApp — через прокси</p></div>
         <label class="sw"><input type="checkbox" id="t-social"><span class="sl"></span></label>
       </div>
@@ -690,6 +699,8 @@ function refresh(){
     }
     $('#v-last').textContent=last;$('#v-last2').textContent=sub;
     $('#t-vpn').checked=!!s.vpn;$('#t-social').checked=!!s.social;$('#t-video').checked=!!s.video;$('#t-zapret').checked=!!s.zapret;
+    if($('#t-itx')) $('#t-itx').checked=!!s.itx;
+    if($('#t-google')) $('#t-google').checked=!!s.google_itx;
   }).catch(function(){});
 }
 
@@ -780,6 +791,18 @@ bindToggle('#t-vpn','toggle_vpn','Прокси включён','Прокси в�
 bindToggle('#t-social','toggle_social','Соцсети через прокси','Соцсети напрямую (zapret)');
 bindToggle('#t-video','toggle_video','Google видео через прокси','Google видео напрямую (zapret)');
 bindToggle('#t-zapret','toggle_zapret','Zapret включён','Zapret выключен');
+function bindPair(id,onAct,offAct,onTxt,offTxt){
+  var el=$(id); if(!el) return;
+  el.addEventListener('change',function(e){
+    lockUntil=Date.now()+8000;
+    var a=e.target.checked?onAct:offAct;
+    fetch('/cgi-bin/api.cgi?action='+a,{method:'POST'}).then(function(){
+      toast(e.target.checked?onTxt:offTxt); setTimeout(refresh,2000);
+    }).catch(function(){ toast('ошибка'); });
+  });
+}
+bindPair('#t-itx','itx_on','itx_off','ITX включён','ITX выключен');
+bindPair('#t-google','google_itx_on','google_itx_off','Google через ITX','Google напрямую');
 
 var logFile='mihomo';
 function setLog(f){

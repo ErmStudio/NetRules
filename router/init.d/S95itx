@@ -1,0 +1,28 @@
+#!/bin/sh
+# Xray для узлов ITX (второй провайдер)
+PATH=/opt/bin:/opt/sbin:/bin:/sbin:/usr/bin:/usr/sbin
+PIDF=/opt/var/run/itx.pid
+CONF=/opt/etc/itx/config.json
+LOG=/opt/var/log/itx.log
+up() { [ -f $PIDF ] && kill -0 "$(cat $PIDF 2>/dev/null)" 2>/dev/null; }
+start() {
+  if up; then echo "itx already running"; return; fi
+  [ -f "$CONF" ] || { echo "нет конфига itx"; return; }
+  /opt/sbin/xray -c "$CONF" >> $LOG 2>&1 &
+  echo $! > $PIDF
+  sleep 2
+  if up; then echo "itx started"; else echo "itx FAILED"; fi
+}
+stop() {
+  up && kill "$(cat $PIDF)" 2>/dev/null
+  sleep 1
+  rm -f $PIDF
+  echo "itx stopped"
+}
+case "$1" in
+  start) start ;;
+  stop) stop ;;
+  restart) stop; start ;;
+  status) if up; then echo "itx: running"; else echo "itx: stopped"; fi ;;
+  *) echo "Usage: $0 {start|stop|restart|status}" ;;
+esac
