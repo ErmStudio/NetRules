@@ -21,13 +21,13 @@ TMP=/tmp/mh-speed.txt
 sel() {
   /opt/bin/curl -s -o /dev/null --max-time 8 -X PUT \
     -H "Authorization: Bearer $SECRET" -H "Content-Type: application/json" \
-    -d "{\"name\":\"$1\"}" "$API/proxies/PROXY" 2>/dev/null
+    -d "{\"name\":\"$1\"}" "$API/proxies/TEST" 2>/dev/null
 }
 cc() { awk -F'|' -v n="$1" '$1==n{print $2; exit}' $CT 2>/dev/null; }
 
 # печатает "байты|секунды" — сколько успели принять за ~1.2 с
 measure() {
-  R=$(/opt/bin/curl -s -o /dev/null --max-time 1.2 --proxy "http://127.0.0.1:7890" \
+  R=$(/opt/bin/curl -s -o /dev/null --max-time 1.2 --proxy "http://127.0.0.1:7893" \
       -w "%{size_download} %{time_total}" "$URL" 2>/dev/null)
   B=$(printf '%s' "$R" | awk '{print $1}')
   T=$(printf '%s' "$R" | awk '{print $2}')
@@ -75,6 +75,11 @@ fi
 
 BESTC=""
 [ -n "$BEST" ] && BESTC=$(cc "$BEST")
+
+# Закрепляем лучший узел в рабочей группе (одно переключение за прогон)
+[ -n "$BEST" ] && /opt/bin/curl -s -o /dev/null --max-time 8 -X PUT \
+  -H "Authorization: Bearer $SECRET" -H "Content-Type: application/json" \
+  -d "{\"name\":\"$BEST\"}" "$API/proxies/PROXY" 2>/dev/null
 
 OUTJSON=""
 while read -r nd ms b t; do

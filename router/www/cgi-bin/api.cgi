@@ -535,13 +535,14 @@ print(json.dumps({'now': d.get('now') or '', 'all': d.get('all') or []}, ensure_
     SUB="${SITE_SUBTITLE:-$PARTS}"
     CONTACT="${CONTACT_URL:-https://github.com/ErmStudio/NetRules/issues/new}"
     INTERVAL="${SPEEDTEST_EVERY_H:-3}"
+    ITXAVAIL=0; [ -f /opt/etc/itx/sub.json ] && ITXAVAIL=1
     tg=0; grep -q '^TG_TOKEN=.\+' /opt/etc/mihomo/ui.conf 2>/dev/null && tg=1
     R_URL="${ROUTER_URL:-http://192.168.1.1/}"
     Z_URL="${ZAPRET_URL:-http://192.168.1.1:90/}"
     M_URL="${MIHOMO_UI_URL:-http://mihomo.lan:9090/ui/metacubexd/}"
     printf 'Content-Type: application/json\n\n'
-    printf '{"router":"%s","zapret":"%s","mihomo":"%s","version":"%s","subtitle":"%s","contact":"%s","interval":"%s","tg":%s}\n' \
-      "$(esc "$R_URL")" "$(esc "$Z_URL")" "$(esc "$M_URL")" "$(esc "$VER")" "$(esc "$SUB")" "$(esc "$CONTACT")" "$(esc "$INTERVAL")" "$tg"
+    printf '{"router":"%s","zapret":"%s","mihomo":"%s","version":"%s","subtitle":"%s","contact":"%s","interval":"%s","tg":%s,"itx_available":%s}\n' \
+      "$(esc "$R_URL")" "$(esc "$Z_URL")" "$(esc "$M_URL")" "$(esc "$VER")" "$(esc "$SUB")" "$(esc "$CONTACT")" "$(esc "$INTERVAL")" "$tg" "$ITXAVAIL"
     ;;
   myip)
     printf 'Content-Type: application/json\n\n'

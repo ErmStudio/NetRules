@@ -723,6 +723,14 @@ function loadCfg(){
     if(c.subtitle && $('#site-sub')) $('#site-sub').textContent=c.subtitle;
     if(c.version){
       if($('#ver')) $('#ver').textContent='v'+c.version;
+      if(c.itx_available===0||c.itx_available==='0'){
+        ['t-itx','t-google','sub-mode'].forEach(function(id){
+          var el=document.getElementById(id);
+          if(el){var card=el.closest('.card'); if(card) card.style.display='none';}
+        });
+        var sel=document.getElementById('itx-sel');
+        if(sel){var c2=sel.closest('.card'); if(c2) c2.style.display='none';}
+      }
       if($('#about-ver')) $('#about-ver').textContent='v'+c.version;
     }
   }).catch(function(){});
