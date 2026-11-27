@@ -221,7 +221,7 @@ def age_sec(x):
 c = d.get('connections') or []
 dev = collections.Counter(); dom = collections.Counter(); dl = collections.Counter()
 pol = collections.defaultdict(collections.Counter)
-stall = collections.Counter(); stallage = collections.defaultdict(float)
+stall = collections.Counter(); stallage = collections.defaultdict(float); okc = collections.Counter()
 rules = collections.defaultdict(collections.Counter)
 for x in c:
     m = x.get('metadata') or {}
@@ -239,7 +239,9 @@ for x in c:
     if r:
         rules[h][r + ('/' + rp if rp else '')] += 1
     a = age_sec(x)
-    if down == 0 and up > 100 and a > 6:
+    if down > 0:
+        okc[h] += 1
+    elif up > 100 and a > 6:
         stall[h] += 1
         if a > stallage[h]:
             stallage[h] = a
@@ -255,6 +257,7 @@ out = {
       'policy': pol[k].most_common(1)[0][0],
       'rule': rules[k].most_common(1)[0][0] if rules[k] else '',
       'stalled': stall[k],
+      'ok': okc[k],
       'stallsec': int(stallage[k]),
   } for k, v in doms],
 }
