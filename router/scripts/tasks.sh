@@ -6,6 +6,7 @@ PIDF=/opt/var/run/mihomo-tasks.pid
 [ -f /opt/etc/mihomo/ui.conf ] && . /opt/etc/mihomo/ui.conf
 MIHOMO_API="${MIHOMO_API:-http://127.0.0.1:9090}"
 MIHOMO_SECRET="${MIHOMO_SECRET:-change-me}"
+SPEEDTEST_EVERY_H="${SPEEDTEST_EVERY_H:-3}"
 if [ -f $PIDF ] && kill -0 "$(cat $PIDF 2>/dev/null)" 2>/dev/null; then
   echo "tasks already running"
   exit 0
@@ -51,7 +52,7 @@ while true; do
 
   # каждые 2 часа — замер скорости узлов и закрепление лучшего
   HM=$(date +%Y%m%d%H)
-  if [ $((HN % 2)) -eq 0 ] && [ "$HM" != "$(cat $BASE/.last_speed 2>/dev/null)" ]; then
+  if [ "$SPEEDTEST_EVERY_H" -gt 0 ] && [ $((HN % SPEEDTEST_EVERY_H)) -eq 0 ] && [ "$HM" != "$(cat $BASE/.last_speed 2>/dev/null)" ]; then
     echo "$HM" > $BASE/.last_speed
     echo "$(date '+%F %T') задача: тест скорости" >> $LOG
     /opt/etc/mihomo/speedtest.sh

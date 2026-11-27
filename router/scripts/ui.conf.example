@@ -25,6 +25,14 @@ MIHOMO_UI_URL="http://mihomo.lan:9090/ui/metacubexd/"
 # Ссылка для кнопки «Написать разработчику»
 # CONTACT_URL="https://github.com/ErmStudio/NetRules/issues/new"
 
+# --- Замер скорости (влияет на расход трафика подписки) ---
+# сколько узлов проверять (по 1.5 МБ каждый)
+# SPEEDTEST_CANDIDATES=6
+# размер тестового файла в байтах
+# SPEEDTEST_BYTES=1500000
+# как часто запускать (в часах; 0 — только вручную)
+# SPEEDTEST_EVERY_H=3
+
 # --- Уведомления в Telegram (необязательно) ---
 # Создайте бота через @BotFather, узнайте chat_id через @userinfobot
 # TG_TOKEN="123456789:AAH..."
