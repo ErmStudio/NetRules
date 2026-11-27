@@ -253,7 +253,7 @@ button.primary:hover{box-shadow:0 12px 30px rgba(79,140,255,.5)}
         <label class="sw"><input type="checkbox" id="t-social"><span class="sl"></span></label>
       </div>
       <div class="card tog">
-        <div><h3>Видео через прокси</h3><p>Видео Google (YouTube и Photos) — через прокси</p></div>
+        <div><h3>Google видео</h3><p>YouTube и Google Photos — через прокси</p></div>
         <label class="sw"><input type="checkbox" id="t-video"><span class="sl"></span></label>
       </div>
 
@@ -670,7 +670,7 @@ function bindToggle(id,action,on,off){
 }
 bindToggle('#t-vpn','toggle_vpn','Прокси включён','Прокси выключен');
 bindToggle('#t-social','toggle_social','Соцсети через прокси','Соцсети напрямую (zapret)');
-bindToggle('#t-video','toggle_video','Видео через прокси','Видео напрямую (zapret)');
+bindToggle('#t-video','toggle_video','Google видео через прокси','Google видео напрямую (zapret)');
 bindToggle('#t-zapret','toggle_zapret','Zapret включён','Zapret выключен');
 
 var logFile='mihomo';
@@ -782,7 +782,7 @@ function toggleVideoHotkey(){
   lockUntil=Date.now()+8000;
   fetch('/cgi-bin/api.cgi?action=toggle_video&on='+want,{method:'POST'}).then(function(){
     cb.checked=!!want;
-    toast(want?'Видео через прокси включено':'Видео напрямую (zapret)');
+    toast(want?'Google видео через прокси':'Видео напрямую (zapret)');
     setTimeout(refresh,1200);
   }).catch(function(){ toast('ошибка'); });
 }function checkVersion(manual){
