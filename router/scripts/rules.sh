@@ -6,6 +6,7 @@ LAN=192.168.1.0/24
 LOG=/opt/var/log/mihomo-watchdog.log
 
 apply() {
+  /bin/sh /opt/etc/mihomo/quic_block.sh >/dev/null 2>&1
   iptables -t mangle -N MH_MARK 2>/dev/null
   iptables -t mangle -F MH_MARK
   iptables -t mangle -A MH_MARK -d 192.168.0.0/16 -j RETURN

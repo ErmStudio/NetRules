@@ -386,6 +386,26 @@ print(json.dumps(out, ensure_ascii=False))
     printf 'Content-Type: application/json\n\n{"ok":true,"google_itx":0}\n'
     ;;
 
+  itx_list)
+    printf 'Content-Type: application/json\n\n'
+    /opt/bin/curl -s --max-time 6 -H "Authorization: Bearer $SECRET" "$API/proxies/ITX" 2>/dev/null | /opt/bin/python3 -c "
+import sys, json
+try:
+    d = json.load(sys.stdin)
+except Exception:
+    print('{\"now\":\"\",\"all\":[]}')
+    raise SystemExit
+print(json.dumps({'now': d.get('now') or '', 'all': d.get('all') or []}, ensure_ascii=False))
+"
+    ;;
+
+  itx_pick)
+    name=$(printf '%s' "$q" | sed -n 's/.*name=\([^&]*\).*/\1/p' | sed 's/%20/ /g;s/%2F/\//g')
+    /opt/bin/curl -s -o /dev/null --max-time 10 -X PUT -H "Authorization: Bearer $SECRET" \
+      -H "Content-Type: application/json" -d "{\"name\":\"$name\"}" "$API/proxies/ITX" 2>/dev/null
+    printf 'Content-Type: application/json\n\n{"ok":true,"now":"%s"}\n' "$name"
+    ;;
+
   config)
     VER=$(cat /opt/etc/mihomo/VERSION 2>/dev/null || echo "1.0.0")
     MODEL=$(cat /proc/device-tree/model 2>/dev/null | tr -d '\000' | sed 's/ *$//')
