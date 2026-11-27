@@ -878,7 +878,7 @@ function loadItx(){
     if(!s||!d||!d.all) return;
     s.innerHTML=d.all.map(function(n){return '<option'+(n===d.now?' selected':'')+'>'+n+'</option>';}).join('');
     var c=document.getElementById('itx-cur');
-    if(c) c.textContent='сейчас: '+(d.now||'—');
+    if(c) c.textContent='сейчас: '+(d.now||'—')+(d.gemini?(' · Gemini: '+d.gemini):'');
   }).catch(function(){});
 }
 function checkGemini(){

@@ -415,7 +415,15 @@ try:
 except Exception:
     print('{\"now\":\"\",\"all\":[]}')
     raise SystemExit
-print(json.dumps({'now': d.get('now') or '', 'all': d.get('all') or []}, ensure_ascii=False))
+st = ''
+try:
+    for line in open('/opt/etc/itx/gemini_state.txt'):
+        p = line.strip().split('|')
+        if len(p) == 3:
+            st = p[0] + ' · ' + p[2]
+except Exception:
+    pass
+print(json.dumps({'now': d.get('now') or '', 'all': d.get('all') or [], 'gemini': st}, ensure_ascii=False))
 "
     ;;
 

@@ -67,6 +67,15 @@ while true; do
     fi
   fi
 
+  # раз в час — мягкая проверка Gemini на текущем узле ITX
+  if [ -x /opt/etc/itx/gemini_watch.sh ] && [ "$MN" = "20" ]; then
+    MARK="$D$HN"
+    if [ "$MARK" != "$(cat $BASE/.last_gemini 2>/dev/null)" ]; then
+      echo "$MARK" > $BASE/.last_gemini
+      ( /opt/etc/itx/gemini_watch.sh >/dev/null 2>&1 & )
+    fi
+  fi
+
   # 05:10 ежедневно — бэкап конфигов
   if [ "$H" = "05" ] && [ "$D" != "$(cat $BASE/.last_backup 2>/dev/null)" ]; then
     echo "$D" > $BASE/.last_backup
