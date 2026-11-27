@@ -93,6 +93,20 @@ while true; do
     fi
   fi
 
+  # страна выхода: не оставляем узел из RU/BY/KZ (Google считает регион смешанным)
+  if [ ! -f /tmp/mh-geochk ] || [ "$(date +%s)" -ge "$(cat /tmp/mh-geochk 2>/dev/null || echo 0)" ]; then
+    date +%s > /dev/null
+    echo $(( $(date +%s) + 1800 )) > /tmp/mh-geochk
+    CC=$(/opt/bin/curl -s --max-time 8 --proxy "http://127.0.0.1:7890" "https://www.cloudflare.com/cdn-cgi/trace" 2>/dev/null | sed -n 's/^loc=//p')
+    case "$CC" in
+      RU|BY|KZ)
+        say "страна выхода $CC — переключаю на авто-выбор"
+        /opt/bin/curl -s -o /dev/null --max-time 8 -X PUT -H "$AUTH" -H "Content-Type: application/json" -d '{"name":"AUTO"}' "$API/proxies/PROXY" 2>/dev/null
+        notify_once "NetRules: узел выходил через $CC, переключил на авто-выбор"
+        ;;
+    esac
+  fi
+
   # не мешаем проверке узлов
   if [ -f /tmp/mh-checking ] || [ -f /tmp/mh-fullcheck ]; then
     sleep 10
