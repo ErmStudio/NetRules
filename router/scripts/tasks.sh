@@ -24,21 +24,23 @@ while true; do
     echo "$HM2" > $BASE/.last_hist
     /opt/etc/mihomo/delayhist.sh
   fi
-  # 23:50 — дневной срез трафика
-  if [ "$H" = "23" ] && [ "$D" != "$(cat $BASE/.last_traffic 2>/dev/null)" ]; then
+  # 00:00 — срез трафика за прошедшие сутки (ровно на границе дня)
+  if [ "$H" = "00" ] && [ "$D" != "$(cat $BASE/.last_traffic 2>/dev/null)" ]; then
     echo "$D" > $BASE/.last_traffic
     C=$(/opt/bin/curl -s --max-time 6 -H "Authorization: Bearer $MIHOMO_SECRET" "$MIHOMO_API/connections" 2>/dev/null)
-    DL=$(printf "%s" "$C" | sed -n "s/.*\"downloadTotal\":\\([0-9]*\\).*/\\1/p" | head -1)
-    UL=$(printf "%s" "$C" | sed -n "s/.*\"uploadTotal\":\\([0-9]*\\).*/\\1/p" | head -1)
+    DL=$(printf "%s" "$C" | sed -n "s/.*\"downloadTotal\":\([0-9]*\).*/\1/p" | head -1)
+    UL=$(printf "%s" "$C" | sed -n "s/.*\"uploadTotal\":\([0-9]*\).*/\1/p" | head -1)
     [ -z "$DL" ] && DL=0
     [ -z "$UL" ] && UL=0
+    YDAY=$(/opt/bin/python3 -c "import datetime;print((datetime.date.today()-datetime.timedelta(days=1)).isoformat())")
     PREV=$(cat $BASE/.traffic_last 2>/dev/null)
     PDL=0; PUL=0
     if [ -n "$PREV" ]; then PDL=${PREV%|*}; PUL=${PREV#*|}; fi
     DDL=$((DL - PDL)); [ "$DDL" -lt 0 ] && DDL=$DL
     DUL=$((UL - PUL)); [ "$DUL" -lt 0 ] && DUL=$UL
-    echo "$(date +%F),$DDL,$DUL" >> $BASE/traffic_daily.csv
+    echo "$YDAY,$DDL,$DUL" >> $BASE/traffic_daily.csv
     echo "$DL|$UL" > $BASE/.traffic_last
+    echo "$(date '+%F %T') срез трафика за $YDAY: $DDL / $DUL" >> $LOG
   fi
 
   # 06:00 ежедневно — обновление подписки
