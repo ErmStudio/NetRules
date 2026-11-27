@@ -170,7 +170,7 @@ section{animation:fade .35s ease}
     <button class="iconbtn" id="theme-btn" title="Переключить тему">☀</button>
     <div class="pills">
       <div class="pill"><span class="dot" id="d-mihomo"></span>mihomo</div>
-      <div class="pill"><span class="dot" id="d-vpn"></span>правила</div>
+      <div class="pill"><span class="dot" id="d-vpn"></span>прокси</div>
       <div class="pill"><span class="dot" id="d-social"></span>соцсети</div>
       <div class="pill"><span class="dot" id="d-video"></span>видео</div>
       <div class="pill"><span class="dot" id="d-zapret"></span>zapret</div>
@@ -190,27 +190,27 @@ section{animation:fade .35s ease}
   <section id="view-overview">
     <div class="grid">
       <div class="card"><div class="k">Аптайм роутера</div><div class="v" id="v-uptime">—</div><div class="h">с последней перезагрузки</div></div>
-      <div class="card"><div class="k">Аптайм mihomo</div><div class="v" id="v-mup">—</div><div class="h" id="v-mihomem">—</div></div>
+      <div class="card"><div class="k">Аптайм прокси</div><div class="v" id="v-mup">—</div><div class="h" id="v-mihomem">—</div></div>
       <div class="card"><div class="k">CPU роутера</div><div class="v" id="v-load">—</div><div class="h">load average 1 мин</div></div>
       <div class="card"><div class="k">RAM роутера</div><div class="v" id="v-mem">—</div><div class="h" id="v-memt">—</div></div>
-      <div class="card"><div class="k">Узлы mihomo</div><div class="v" id="v-nodes">—</div><div class="h" id="v-health">—</div></div>
+      <div class="card"><div class="k">Узлы прокси</div><div class="v" id="v-nodes">—</div><div class="h" id="v-health">—</div></div>
       
       <div class="card"><div class="k">Обновление подписки</div><div class="v" id="v-last" style="font-size:15px;margin-top:8px">—</div><div class="h" id="v-last2">подписки</div></div>
       <div class="card wide"><div class="k">Текущий узел</div><div class="kv"><div class="kvi"><div class="v" id="v-delay">—</div><div class="h" id="v-node">—</div></div><canvas id="delaychart" width="200" height="48"></canvas></div></div>
-      <div class="card wide"><div class="k">Трафик mihomo</div><div class="kv"><div class="kvi"><div class="v" id="v-dl">—</div><div class="h" id="v-ul">—</div></div><canvas id="spark" width="200" height="48"></canvas></div></div>
+      <div class="card wide"><div class="k">Трафик прокси</div><div class="kv"><div class="kvi"><div class="v" id="v-dl">—</div><div class="h" id="v-ul">—</div></div><canvas id="spark" width="200" height="48"></canvas></div></div>
       
     </div>
     <div class="col">
       <div class="card tog">
-        <div><h3>Прокси mihomo</h3><p>Telegram, ChatGPT и остальные заблокированные — через туннель mihomo</p></div>
+        <div><h3>Прокси</h3><p>Telegram, ChatGPT и остальные заблокированные — через прокси</p></div>
         <label class="sw"><input type="checkbox" id="t-vpn"><span class="sl"></span></label>
       </div>
       <div class="card tog">
-        <div><h3>Соцсети через mihomo</h3><p>Instagram, Facebook, WhatsApp — через туннель mihomo</p></div>
+        <div><h3>Соцсети через прокси</h3><p>Instagram, Facebook, WhatsApp — через прокси</p></div>
         <label class="sw"><input type="checkbox" id="t-social"><span class="sl"></span></label>
       </div>
       <div class="card tog">
-        <div><h3>Видео через mihomo</h3><p>Видео Google (YouTube и Photos) — через туннель mihomo</p></div>
+        <div><h3>Видео через прокси</h3><p>Видео Google (YouTube и Photos) — через прокси</p></div>
         <label class="sw"><input type="checkbox" id="t-video"><span class="sl"></span></label>
       </div>
       <div class="card tog">
@@ -527,9 +527,9 @@ function bindToggle(id,action,on,off){
     fetch('/cgi-bin/api.cgi?action='+action+'&on='+(e.target.checked?1:0),{method:'POST'}).then(function(){toast(e.target.checked?on:off);setTimeout(refresh,2000);});
   });
 }
-bindToggle('#t-vpn','toggle_vpn','mihomo включён','mihomo выключен');
-bindToggle('#t-social','toggle_social','Соцсети через mihomo','Соцсети напрямую (zapret)');
-bindToggle('#t-video','toggle_video','Видео через mihomo','Видео напрямую (zapret)');
+bindToggle('#t-vpn','toggle_vpn','Прокси включён','Прокси выключен');
+bindToggle('#t-social','toggle_social','Соцсети через прокси','Соцсети напрямую (zapret)');
+bindToggle('#t-video','toggle_video','Видео через прокси','Видео напрямую (zapret)');
 bindToggle('#t-zapret','toggle_zapret','Zapret включён','Zapret выключен');
 
 var logFile='mihomo';
