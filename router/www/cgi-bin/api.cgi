@@ -5,8 +5,10 @@ RULES=/opt/etc/mihomo/rules-proxy.yaml
 CFG=/opt/etc/mihomo/config.yaml
 STATUS=/opt/etc/mihomo/last_update.txt
 LOGDIR=/opt/var/log
-API="http://127.0.0.1:9090"
-AUTH="Authorization: Bearer dshsecret"
+[ -f /opt/etc/mihomo/ui.conf ] && . /opt/etc/mihomo/ui.conf
+API="${MIHOMO_API:-http://127.0.0.1:9090}"
+SECRET="${MIHOMO_SECRET:-change-me}"
+AUTH="Authorization: Bearer $SECRET"
 SPEEDURL="https://speed.cloudflare.com/__down?bytes=2000000"
 
 esc() {
@@ -342,13 +344,21 @@ print(json.dumps(out, ensure_ascii=False))
 
   config)
     VER=$(cat /opt/etc/mihomo/VERSION 2>/dev/null || echo "1.0.0")
+    MODEL=$(cat /proc/device-tree/model 2>/dev/null | tr -d '\000' | sed 's/ *$//')
+    [ -z "$MODEL" ] && MODEL="Keenetic"
+    MV=$(/opt/bin/curl -s --max-time 4 -H "Authorization: Bearer $SECRET" "$API/version" 2>/dev/null | sed -n 's/.*"version":"\([^"]*\)".*/\1/p' | head -1)
+    ZV=$(/opt/usr/bin/nfqws2 --version 2>/dev/null | sed -n 's/.*version v\([0-9.]*\).*/\1/p' | head -1)
+    PARTS="$MODEL"
+    [ -n "$MV" ] && PARTS="$PARTS · mihomo $MV"
+    [ -n "$ZV" ] && PARTS="$PARTS · zapret $ZV"
+    SUB="${SITE_SUBTITLE:-$PARTS}"
     tg=0; grep -q '^TG_TOKEN=.\+' /opt/etc/mihomo/ui.conf 2>/dev/null && tg=1
     R_URL="${ROUTER_URL:-http://192.168.1.1/}"
     Z_URL="${ZAPRET_URL:-http://192.168.1.1:90/}"
     M_URL="${MIHOMO_UI_URL:-http://mihomo.lan:9090/ui/metacubexd/}"
     printf 'Content-Type: application/json\n\n'
-    printf '{"router":"%s","zapret":"%s","mihomo":"%s","version":"%s","tg":%s}\n' \
-      "$(esc "$R_URL")" "$(esc "$Z_URL")" "$(esc "$M_URL")" "$(esc "$VER")" "$tg"
+    printf '{"router":"%s","zapret":"%s","mihomo":"%s","version":"%s","subtitle":"%s","tg":%s}\n' \
+      "$(esc "$R_URL")" "$(esc "$Z_URL")" "$(esc "$M_URL")" "$(esc "$VER")" "$(esc "$SUB")" "$tg"
     ;;
   myip)
     printf 'Content-Type: application/json\n\n'

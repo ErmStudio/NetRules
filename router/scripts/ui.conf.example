@@ -18,6 +18,10 @@ ZAPRET_URL="http://192.168.1.1:90/"
 # Панель mihomo (metacubexd / yacd)
 MIHOMO_UI_URL="http://mihomo.lan:9090/ui/metacubexd/"
 
+# Подзаголовок в шапке (по умолчанию собирается автоматически:
+# модель роутера · mihomo · zapret)
+# SITE_SUBTITLE="Мой роутер · NetRules"
+
 # --- Уведомления в Telegram (необязательно) ---
 # Создайте бота через @BotFather, узнайте chat_id через @userinfobot
 # TG_TOKEN="123456789:AAH..."

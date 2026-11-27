@@ -206,7 +206,7 @@ button.primary:hover{box-shadow:0 12px 30px rgba(79,140,255,.5)}
       <circle cx="45" cy="41" r="4.5" fill="url(#g)"/>
       <path d="M32 22.5v9M28.5 30 22 37M35.5 30 42 37" stroke="url(#g)" stroke-width="2.4" stroke-linecap="round"/>
     </svg></a>
-    <div><h1>NetRules</h1><div class="sub">Keenetic Hopper · mihomo + zapret</div></div>
+    <div><h1>NetRules</h1><div class="sub" id="site-sub">Keenetic · mihomo + zapret</div></div>
     <button class="iconbtn" id="theme-btn" title="Переключить тему">☀</button>
     <div class="pills">
       <div class="pill"><span class="dot" id="d-mihomo"></span>mihomo</div>
@@ -569,6 +569,7 @@ function loadCfg(){
     if(c.router && $('#lnk-router')) $('#lnk-router').href=c.router;
     if(c.zapret && $('#lnk-zapret')) $('#lnk-zapret').href=c.zapret;
     if(c.mihomo && $('#lnk-mihomo')) $('#lnk-mihomo').href=c.mihomo;
+    if(c.subtitle && $('#site-sub')) $('#site-sub').textContent=c.subtitle;
     if(c.version){
       if($('#ver')) $('#ver').textContent='v'+c.version;
       if($('#about-ver')) $('#about-ver').textContent='v'+c.version;
