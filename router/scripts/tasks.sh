@@ -26,15 +26,6 @@ while true; do
     echo "$HM2" > $BASE/.last_hist
     /opt/etc/mihomo/delayhist.sh
   fi
-  # проверка узлов на живость каждые N часов
-  if [ "$NODEHEALTH_EVERY_H" -gt 0 ] && [ $((HN % NODEHEALTH_EVERY_H)) -eq 0 ] && [ "$MN" = "05" ]; then
-    HMH=$(date +%Y%m%d%H)
-    if [ "$HMH" != "$(cat $BASE/.last_health 2>/dev/null)" ]; then
-      echo "$HMH" > $BASE/.last_health
-      echo "$(date '+%F %T') задача: проверка узлов" >> $LOG
-      /opt/etc/mihomo/checkall.sh >/dev/null 2>&1
-    fi
-  fi
   # каждые 15 минут — снапшот трафика (устойчив к перезапускам mihomo)
   MN=$(date +%M)
   case "$MN" in
@@ -64,8 +55,8 @@ while true; do
   HM=$(date +%Y%m%d%H)
   if [ "$SPEEDTEST_EVERY_H" -gt 0 ] && [ $((HN % SPEEDTEST_EVERY_H)) -eq 0 ] && [ "$HM" != "$(cat $BASE/.last_speed 2>/dev/null)" ]; then
     echo "$HM" > $BASE/.last_speed
-    echo "$(date '+%F %T') задача: тест скорости" >> $LOG
-    /opt/etc/mihomo/speedtest.sh
+    echo "$(date '+%F %T') задача: проверка узлов и замер скорости" >> $LOG
+    /opt/etc/mihomo/fullcheck.sh
   fi
   # 05:00 по воскресеньям — обновление пакета mihomo
   if [ "$H" = "05" ] && [ "$W" = "0" ] && [ "$D" != "$(cat $BASE/.last_pkg 2>/dev/null)" ]; then

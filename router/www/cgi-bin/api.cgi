@@ -342,6 +342,23 @@ print(json.dumps(out, ensure_ascii=False))
     printf '{"log":%s}\n' "$(jstr "$(tail -n 40 /opt/var/log/netrules-update.log 2>/dev/null)")"
     ;;
 
+  set_interval)
+    h=$(printf '%s' "$q" | sed -n 's/.*hours=\([0-9]*\).*/\1/p')
+    case "$h" in 0|1|2|3|4|6|8|12|24) ;; *) h=3 ;; esac
+    CONF=/opt/etc/mihomo/ui.conf
+    touch "$CONF"
+    if grep -q '^SPEEDTEST_EVERY_H=' "$CONF" 2>/dev/null; then
+      sed -i "s|^SPEEDTEST_EVERY_H=.*|SPEEDTEST_EVERY_H=\"$h\"|" "$CONF"
+    else
+      printf '\nSPEEDTEST_EVERY_H="%s"\n' "$h" >> "$CONF"
+    fi
+    ( sleep 1
+      kill "$(cat /opt/var/run/mihomo-tasks.pid 2>/dev/null)" 2>/dev/null
+      rm -f /opt/var/run/mihomo-tasks.pid
+      /opt/etc/init.d/S97mihomo-autoupdate start >/dev/null 2>&1
+    ) >/dev/null 2>&1 &
+    printf 'Content-Type: application/json\n\n{"ok":true,"hours":%s}\n' "$h"
+    ;;
   config)
     VER=$(cat /opt/etc/mihomo/VERSION 2>/dev/null || echo "1.0.0")
     MODEL=$(cat /proc/device-tree/model 2>/dev/null | tr -d '\000' | sed 's/ *$//')
@@ -353,13 +370,14 @@ print(json.dumps(out, ensure_ascii=False))
     [ -n "$ZV" ] && PARTS="$PARTS · zapret $ZV"
     SUB="${SITE_SUBTITLE:-$PARTS}"
     CONTACT="${CONTACT_URL:-https://github.com/ErmStudio/NetRules/issues/new}"
+    INTERVAL="${SPEEDTEST_EVERY_H:-3}"
     tg=0; grep -q '^TG_TOKEN=.\+' /opt/etc/mihomo/ui.conf 2>/dev/null && tg=1
     R_URL="${ROUTER_URL:-http://192.168.1.1/}"
     Z_URL="${ZAPRET_URL:-http://192.168.1.1:90/}"
     M_URL="${MIHOMO_UI_URL:-http://mihomo.lan:9090/ui/metacubexd/}"
     printf 'Content-Type: application/json\n\n'
-    printf '{"router":"%s","zapret":"%s","mihomo":"%s","version":"%s","subtitle":"%s","contact":"%s","tg":%s}\n' \
-      "$(esc "$R_URL")" "$(esc "$Z_URL")" "$(esc "$M_URL")" "$(esc "$VER")" "$(esc "$SUB")" "$(esc "$CONTACT")" "$tg"
+    printf '{"router":"%s","zapret":"%s","mihomo":"%s","version":"%s","subtitle":"%s","contact":"%s","interval":"%s","tg":%s}\n' \
+      "$(esc "$R_URL")" "$(esc "$Z_URL")" "$(esc "$M_URL")" "$(esc "$VER")" "$(esc "$SUB")" "$(esc "$CONTACT")" "$(esc "$INTERVAL")" "$tg"
     ;;
   myip)
     printf 'Content-Type: application/json\n\n'
@@ -474,7 +492,7 @@ print(json.dumps({'rows': rows}, ensure_ascii=False))
     ;;
 
   fullcheck)
-    ( /bin/sh /opt/etc/mihomo/checkall.sh >/dev/null 2>&1; sleep 1; /opt/etc/mihomo/speedtest.sh >/dev/null 2>&1 ) &
+    ( /bin/sh /opt/etc/mihomo/fullcheck.sh >/dev/null 2>&1 & ) &
     printf 'Content-Type: application/json\n\n{"ok":true,"started":true}\n'
     ;;
   nodecheck)

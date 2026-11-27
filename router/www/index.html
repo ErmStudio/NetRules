@@ -290,6 +290,17 @@ button.primary:hover{box-shadow:0 12px 30px rgba(79,140,255,.5)}
       <div class="h" id="check-state" style="margin-top:6px;font-size:11.5px;color:var(--dim)"></div>
     </div>
 
+    <div class="card compact" style="margin-bottom:12px">
+      <div class="srow" style="background:transparent;flex-wrap:wrap">
+        <span class="nm">Автопроверка узлов и замера скорости</span>
+        <span class="seg" id="int-mode" style="margin-left:auto">
+          <button data-h="1">1 ч</button>
+          <button data-h="3">3 ч</button>
+          <button data-h="6">6 ч</button>
+          <button data-h="12">12 ч</button>
+        </span>
+      </div>
+    </div>
     <div class="card">
       <div class="k" style="margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">
         <span>Узлы: пинг и скорость</span>
@@ -449,7 +460,7 @@ function show(v){
   if(location.hash!=='#'+v) history.replaceState(null,'','#'+v);
   if(v==='rules') loadRules();
   if(v==='logs') loadLog();
-  if(v==='speed'){ loadHealth(); loadSpeed(); }
+  if(v==='speed'){ loadHealth(); loadSpeed(); loadInterval(); }
   if(v==='net') loadNet();
   if(v==='service') loadService();
 }
@@ -629,7 +640,22 @@ function loadHealth(){
     $('#hs-deadlist').textContent=dl.length?('не отвечают: '+dl.slice(0,10).join(', ')):'';
   }).catch(function(){});
 }
-function renderSpeed(d){
+function markInterval(h){
+  Array.prototype.forEach.call(document.querySelectorAll('#int-mode button'),function(b){
+    b.classList.toggle('active', b.getAttribute('data-h')===String(h));
+  });
+}
+function loadInterval(){
+  api('action=config').then(function(cfg){
+    if(cfg && cfg.interval) markInterval(cfg.interval);
+  }).catch(function(){});
+}
+function setIntervalMode(h){
+  api('action=set_interval&hours='+h).then(function(d){
+    if(d&&d.ok){ markInterval(d.hours); toast('Проверка каждые '+d.hours+' ч'); }
+    else toast('не удалось сохранить');
+  }).catch(function(){ toast('ошибка'); });
+}function renderSpeed(d){
   var box=$('#speed-list');
   if(!d||!d.results||!d.results.length){
     box.innerHTML='<div class="srow"><span class="nm">нет результатов — нажми «Проверить всё»</span></div>';

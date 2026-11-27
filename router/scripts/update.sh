@@ -23,7 +23,7 @@ sleep 2
 if netstat -ltn 2>/dev/null | grep -q ":7892"; then
   echo "OK|$(now)|$CNT" > $STATUS
   echo "=== $(date '+%Y-%m-%d %H:%M:%S') update done, nodes=$CNT ===" >> $LOG
-  ( sleep 2; /opt/etc/mihomo/speedtest.sh >/dev/null 2>&1; sleep 1; /opt/etc/mihomo/checkall.sh >/dev/null 2>&1 ) &
+  ( sleep 2; /opt/etc/mihomo/fullcheck.sh >/dev/null 2>&1 & ) &
 else
   echo "mihomo не поднялся, откатываю конфиг" >> $LOG
   cp -f $BASE/config.yaml.bak $BASE/config.yaml
