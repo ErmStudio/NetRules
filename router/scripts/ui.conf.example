@@ -23,7 +23,7 @@ MIHOMO_UI_URL="http://mihomo.lan:9090/ui/metacubexd/"
 # SITE_SUBTITLE="Мой роутер · NetRules"
 
 # Ссылка для кнопки «Написать разработчику»
-# CONTACT_URL="https://github.com/EugeneErmakov/NetRules/issues/new"
+# CONTACT_URL="https://github.com/ErmStudio/NetRules/issues/new"
 
 # --- Уведомления в Telegram (необязательно) ---
 # Создайте бота через @BotFather, узнайте chat_id через @userinfobot

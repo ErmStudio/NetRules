@@ -4,7 +4,7 @@
 PATH=/opt/bin:/opt/sbin:/bin:/sbin:/usr/bin:/usr/sbin
 export PATH
 BASE=/opt/etc/mihomo
-REPO="${NETRULES_REPO:-EugeneErmakov/NetRules}"
+REPO="${NETRULES_REPO:-ErmStudio/NetRules}"
 BRANCH="${NETRULES_BRANCH:-main}"
 TMP=/tmp/netrules-upd
 RES=$BASE/update_result.json

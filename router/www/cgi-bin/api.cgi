@@ -306,7 +306,7 @@ print(json.dumps(out, ensure_ascii=False))
   version)
     LOCAL=$(cat /opt/etc/mihomo/VERSION 2>/dev/null | tr -d '\r\n')
     [ -z "$LOCAL" ] && LOCAL="0.0.0"
-    REMOTE=$(/opt/bin/curl -s --max-time 20 "https://raw.githubusercontent.com/EugeneErmakov/NetRules/main/VERSION" 2>/dev/null | tr -d '\r\n ')
+    REMOTE=$(/opt/bin/curl -s --max-time 20 "https://raw.githubusercontent.com/ErmStudio/NetRules/main/VERSION" 2>/dev/null | tr -d '\r\n ')
     if [ -z "$REMOTE" ]; then
       printf 'Content-Type: application/json\n\n{"ok":false,"local":"%s","error":"нет связи с GitHub"}\n' "$LOCAL"
       exit 0
@@ -352,7 +352,7 @@ print(json.dumps(out, ensure_ascii=False))
     [ -n "$MV" ] && PARTS="$PARTS · mihomo $MV"
     [ -n "$ZV" ] && PARTS="$PARTS · zapret $ZV"
     SUB="${SITE_SUBTITLE:-$PARTS}"
-    CONTACT="${CONTACT_URL:-https://github.com/EugeneErmakov/NetRules/issues/new}"
+    CONTACT="${CONTACT_URL:-https://github.com/ErmStudio/NetRules/issues/new}"
     tg=0; grep -q '^TG_TOKEN=.\+' /opt/etc/mihomo/ui.conf 2>/dev/null && tg=1
     R_URL="${ROUTER_URL:-http://192.168.1.1/}"
     Z_URL="${ZAPRET_URL:-http://192.168.1.1:90/}"

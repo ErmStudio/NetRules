@@ -3,12 +3,12 @@
 **Веб-панель управления маршрутизатором Keenetic: mihomo (Clash Meta) + zapret2.**
 Тёмный интерфейс, живой мониторинг, переключение правил в один клик, замер скорости узлов и проверка их здоровья.
 
-[![Version](https://img.shields.io/badge/version-1.2.0-4f8cff.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.2.1-4f8cff.svg)](CHANGELOG.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-4f8cff.svg)](LICENSE)
 ![Platform](https://img.shields.io/badge/platform-Keenetic-22d3ee)
 ![Shell](https://img.shields.io/badge/shell-POSIX-34d399)
 
-> Сделано в **Ermstudio** · автор [Eugene Ermakov](https://github.com/EugeneErmakov)
+> Сделано в **Ermstudio** · автор [Eugene Ermakov](https://github.com/ErmStudio)
 
 ---
 
