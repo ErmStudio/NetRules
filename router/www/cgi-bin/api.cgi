@@ -523,6 +523,41 @@ print(json.dumps({'now': d.get('now') or '', 'all': d.get('all') or []}, ensure_
     printf 'Content-Type: application/json\n\n{"ok":true,"ads":0}\n'
     ;;
 
+  gemini_check)
+    : > /tmp/gm-res.txt
+    cat > /tmp/gm1.sh <<'SH'
+#!/bin/sh
+P=$1
+N=$(awk -F'|' -v p="$P" '$2==p{print $1; exit}' /opt/etc/itx/nodes.txt 2>/dev/null)
+S=$(/opt/etc/itx/gemini_check.sh "$P")
+echo "$P|$N|$S" >> /tmp/gm-res.txt
+SH
+    chmod +x /tmp/gm1.sh
+    for P in $(awk -F'|' '{print $2}' /opt/etc/itx/nodes.txt 2>/dev/null); do echo "$P"; done \
+      | xargs -I{} -P 6 /tmp/gm1.sh {}
+    GOOD=$(grep "|available$" /tmp/gm-res.txt | head -1 | cut -d"|" -f1)
+    if [ -n "$GOOD" ]; then
+      NAME=$(awk -F'|' -v p="$GOOD" '$2==p{print $1; exit}' /opt/etc/itx/nodes.txt 2>/dev/null)
+      /opt/bin/curl -s -o /dev/null --max-time 8 -X PUT -H "Authorization: Bearer $SECRET" \
+        -H "Content-Type: application/json" -d "{\"name\":\"$NAME\"}" "$API/proxies/ITX" 2>/dev/null
+    fi
+    printf 'Content-Type: application/json\n\n'
+    /opt/bin/python3 -c "
+import json
+rows=[]
+try:
+    for line in open('/tmp/gm-res.txt'):
+        p=line.strip().split('|')
+        if len(p)==3: rows.append({'port':p[0],'name':p[1],'status':p[2]})
+except Exception:
+    pass
+ok=[r for r in rows if r['status']=='available']
+print(json.dumps({'ok':True,'total':len(rows),'available':len(ok),
+                  'pinned':ok[0]['name'] if ok else '',
+                  'nodes':rows}, ensure_ascii=False))
+"
+    ;;
+
   config)
     VER=$(cat /opt/etc/mihomo/VERSION 2>/dev/null || echo "1.0.0")
     MODEL=$(cat /proc/device-tree/model 2>/dev/null | tr -d '\000' | sed 's/ *$//')

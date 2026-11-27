@@ -332,6 +332,7 @@ button.primary:hover{box-shadow:0 12px 30px rgba(79,140,255,.5)}
           <select id="itx-sel" style="flex:1;min-width:140px;max-width:none"></select>
           <button onclick="pickItx()" style="padding:7px 12px;font-size:12px">Применить</button>
           <button onclick="testGemini()" style="padding:7px 12px;font-size:12px">Проверить</button>
+          <button onclick="checkGemini()" title="Проверить, где Gemini доступен">Gemini</button>
           <button onclick="blockItx()" style="padding:7px 10px;font-size:12px">Блэклист</button>
         </div>
         <div class="h" id="itx-cur" style="margin-top:6px;font-size:11.5px;color:var(--dim)"></div>
@@ -344,6 +345,8 @@ button.primary:hover{box-shadow:0 12px 30px rgba(79,140,255,.5)}
           <label class="sw"><input type="checkbox" id="t-autosub"><span class="sl"></span></label>
           <span style="font-size:12.5px">автообновление</span>
           <span class="seg" id="sub-mode" style="margin-left:auto">
+            <button data-m="15">15 м</button>
+            <button data-m="30">30 м</button>
             <button data-h="1">1 ч</button>
             <button data-h="2">2 ч</button>
             <button data-h="4">4 ч</button>
@@ -877,6 +880,16 @@ function loadItx(){
     var c=document.getElementById('itx-cur');
     if(c) c.textContent='сейчас: '+(d.now||'—');
   }).catch(function(){});
+}
+function checkGemini(){
+  var c=document.getElementById('itx-cur');
+  if(c) c.textContent='проверяю Gemini по всем узлам ITX…';
+  api('action=gemini_check').then(function(d){
+    if(!d||!d.ok){ if(c) c.textContent='ошибка проверки'; return; }
+    if(c) c.textContent='Gemini доступен: '+d.available+' из '+d.total+(d.pinned?(' · выбран '+d.pinned):' · рабочих нет');
+    if(d.pinned){ toast('Gemini работает: '+d.pinned); setTimeout(loadItx,1500); }
+    else toast('ни один узел не дал доступ к Gemini');
+  }).catch(function(){ if(c) c.textContent='ошибка'; });
 }
 function testGemini(){
   window.open('https://gemini.google.com/app','_blank');
