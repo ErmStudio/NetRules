@@ -26,6 +26,7 @@ video_on=0; grep -q 'googlevideo' "$RULES" 2>/dev/null && video_on=1
 social_on=0; grep -q 'DOMAIN-SUFFIX,instagram.com' "$RULES" 2>/dev/null && social_on=1
 itx_up=0; [ -f /opt/var/run/itx.pid ] && kill -0 "$(cat /opt/var/run/itx.pid 2>/dev/null)" 2>/dev/null && itx_up=1
 google_itx=0; grep -q "gemini.google.com" /opt/etc/mihomo/rules-itx.yaml 2>/dev/null && google_itx=1
+tg_notify=0; . /opt/etc/mihomo/ui.conf 2>/dev/null; [ "${TG_NOTIFY:-1}" = "1" ] && tg_notify=1
 zapret_up=0; ps 2>/dev/null | grep -q '[n]fqws2' && zapret_up=1
 nodes=$(grep -c '^    server: ' "$CFG" 2>/dev/null); [ -z "$nodes" ] && nodes=0
 lu=$(cat "$STATUS" 2>/dev/null)
@@ -95,8 +96,8 @@ case "$act" in
     [ -z "$load" ] && load=0
     [ -z "$mihomem" ] && mihomem=0
     tg=0; grep -q '^TG_TOKEN="..' /opt/etc/mihomo/ui.conf 2>/dev/null && tg=1
-    printf '{"mihomo":%s,"vpn":%s,"video":%s,"social":%s,"zapret":%s,"itx":%s,"google_itx":%s,"tg":%s,"nodes":%s,"last":"%s","uptime":%s,"memtotal":%s,"memavail":%s,"node":"%s","country":"%s","delay":"%s","mup":%s,"load":"%s","temp":%s,"mihomem":%s,"dl":%s,"ul":%s}\n' \
-      "$mihomo_up" "$vpn_on" "$video_on" "$social_on" "$zapret_up" "$itx_up" "$google_itx" "$tg" "$nodes" "$(esc "$lu")" "$up" "$memtot" "$memav" \
+    printf '{"mihomo":%s,"vpn":%s,"video":%s,"social":%s,"zapret":%s,"itx":%s,"google_itx":%s,"tg":%s,"tg_notify":%s,"nodes":%s,"last":"%s","uptime":%s,"memtotal":%s,"memavail":%s,"node":"%s","country":"%s","delay":"%s","mup":%s,"load":"%s","temp":%s,"mihomem":%s,"dl":%s,"ul":%s}\n' \
+      "$mihomo_up" "$vpn_on" "$video_on" "$social_on" "$zapret_up" "$itx_up" "$google_itx" "$tg_notify" "$tg" "$nodes" "$(esc "$lu")" "$up" "$memtot" "$memav" \
       "$(esc "$node")" "$(esc "$country")" "$(esc "$delay")" "$mup" "$(esc "$load")" "$temp" "$mihomem" "$dl" "$ul"
     ;;
 
@@ -404,6 +405,28 @@ print(json.dumps({'now': d.get('now') or '', 'all': d.get('all') or []}, ensure_
     /opt/bin/curl -s -o /dev/null --max-time 10 -X PUT -H "Authorization: Bearer $SECRET" \
       -H "Content-Type: application/json" -d "{\"name\":\"$name\"}" "$API/proxies/ITX" 2>/dev/null
     printf 'Content-Type: application/json\n\n{"ok":true,"now":"%s"}\n' "$name"
+    ;;
+
+  tg_notify_on)
+    CONF=/opt/etc/mihomo/ui.conf
+    touch "$CONF"
+    if grep -q '^TG_NOTIFY=' "$CONF" 2>/dev/null; then
+      sed -i 's|^TG_NOTIFY=.*|TG_NOTIFY="1"|' "$CONF"
+    else
+      printf '\nTG_NOTIFY="1"\n' >> "$CONF"
+    fi
+    printf 'Content-Type: application/json\n\n{"ok":true,"tg_notify":1}\n'
+    ;;
+
+  tg_notify_off)
+    CONF=/opt/etc/mihomo/ui.conf
+    touch "$CONF"
+    if grep -q '^TG_NOTIFY=' "$CONF" 2>/dev/null; then
+      sed -i 's|^TG_NOTIFY=.*|TG_NOTIFY="0"|' "$CONF"
+    else
+      printf '\nTG_NOTIFY="0"\n' >> "$CONF"
+    fi
+    printf 'Content-Type: application/json\n\n{"ok":true,"tg_notify":0}\n'
     ;;
 
   config)

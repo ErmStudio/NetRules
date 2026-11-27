@@ -67,6 +67,10 @@ pre{margin:0;background:#060b14;border:1px solid var(--line);border-radius:12px;
 .speed-cards>.card{display:flex;flex-direction:column;justify-content:flex-start;min-height:0;padding:11px 14px;gap:2px}
 .speed-cards .big{font-size:25px;line-height:1.05}
 .speed-cards .lbl{font-size:10.5px;margin-top:1px}
+select, select option{background:#151a24;color:#e8eefc;border:1px solid rgba(255,255,255,.14)}
+select option:checked{background:#243049}
+body.light select, body.light select option{background:#fff;color:#111}
+
 .speedrow{gap:8px}
 #check-state:empty{display:none}
 .speedrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
@@ -710,6 +714,7 @@ function refresh(){
     $('#t-vpn').checked=!!s.vpn;$('#t-social').checked=!!s.social;$('#t-video').checked=!!s.video;$('#t-zapret').checked=!!s.zapret;
     if($('#t-itx')) $('#t-itx').checked=!!s.itx;
     if($('#t-google')) $('#t-google').checked=!!s.google_itx;
+    if($('#t-tg')) $('#t-tg').checked=!!s.tg_notify;
   }).catch(function(){});
 }
 
@@ -831,6 +836,7 @@ function bindPair(id,onAct,offAct,onTxt,offTxt){
 }
 bindPair('#t-itx','itx_on','itx_off','ITX включён','ITX выключен');
 bindPair('#t-google','google_itx_on','google_itx_off','Google через ITX','Google напрямую');
+bindPair('#t-tg','tg_notify_on','tg_notify_off','Уведомления включены','Уведомления выключены');
 
 var logFile='mihomo';
 function setLog(f){

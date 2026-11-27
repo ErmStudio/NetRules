@@ -30,9 +30,17 @@ probe() {
   [ "$C" = "204" ]
 }
 
-set_auto() {
+set_proxy() {
   /opt/bin/curl -s -o /dev/null --max-time 8 -X PUT -H "$AUTH" \
-    -H "Content-Type: application/json" -d '{"name":"AUTO"}' "$API/proxies/PROXY" 2>/dev/null
+    -H "Content-Type: application/json" -d "{\"name\":\"$1\"}" "$API/proxies/PROXY" 2>/dev/null
+}
+set_auto() {
+  if [ -f /opt/var/run/itx.pid ] && kill -0 "$(cat /opt/var/run/itx.pid 2>/dev/null)" 2>/dev/null; then
+    set_proxy "ITX"
+    say "основная подписка не отвечает — переключил на ITX"
+  else
+    set_proxy "AUTO"
+  fi
 }
 
 now_node() {
