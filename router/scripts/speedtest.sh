@@ -81,7 +81,9 @@ while read -r nd ms b t; do
   [ -z "$nd" ] && continue
   MB=$(awk -v b="$b" -v t="$t" 'BEGIN{ if(t>0) printf "%.1f", (b*8/1000000)/t; else print "0" }')
   C=$(cc "$nd")
-  OUTJSON="$OUTJSON${OUTJSON:+,}{\"node\":\"$nd\",\"country\":\"$C\",\"ms\":$ms,\"mbps\":$MB}"
+  SRC=chroma
+  case "$nd" in ITX-*) SRC=itx ;; esac
+  OUTJSON="$OUTJSON${OUTJSON:+,}{\"node\":\"$nd\",\"country\":\"$C\",\"ms\":$ms,\"mbps\":$MB,\"src\":\"$SRC\"}"
 done < $TMP
 rm -f $TMP
 

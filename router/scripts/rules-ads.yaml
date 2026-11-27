@@ -1,0 +1,31 @@
+payload:
+  # рекламные и трекинговые домены (REJECT)
+  - DOMAIN-SUFFIX,adspector.io
+  - DOMAIN-SUFFIX,adkernel.com
+  - DOMAIN-SUFFIX,weborama.fr
+  - DOMAIN-SUFFIX,uuidksinc.net
+  - DOMAIN-SUFFIX,lotus-dsp.ru
+  - DOMAIN-SUFFIX,veonadx.com
+  - DOMAIN-SUFFIX,doubleclick.net
+  - DOMAIN-SUFFIX,googlesyndication.com
+  - DOMAIN-SUFFIX,googleadservices.com
+  - DOMAIN-SUFFIX,google-analytics.com
+  - DOMAIN-SUFFIX,googletagmanager.com
+  - DOMAIN-SUFFIX,adservice.google.com
+  - DOMAIN-SUFFIX,scorecardresearch.com
+  - DOMAIN-SUFFIX,adsrvr.org
+  - DOMAIN-SUFFIX,criteo.com
+  - DOMAIN-SUFFIX,criteo.net
+  - DOMAIN-SUFFIX,taboola.com
+  - DOMAIN-SUFFIX,outbrain.com
+  - DOMAIN-SUFFIX,adnxs.com
+  - DOMAIN-SUFFIX,rubiconproject.com
+  - DOMAIN-SUFFIX,pubmatic.com
+  - DOMAIN-SUFFIX,smartadserver.com
+  - DOMAIN-SUFFIX,mytarget.com
+  - DOMAIN-SUFFIX,adfox.ru
+  - DOMAIN-SUFFIX,an.yandex.ru
+  - DOMAIN-SUFFIX,mc.yandex.ru
+  - DOMAIN-SUFFIX,top-fwz1.mail.ru
+  - DOMAIN-SUFFIX,ad.mail.ru
+  - DOMAIN-SUFFIX,ads.vk.com

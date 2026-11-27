@@ -7,6 +7,7 @@ PIDF=/opt/var/run/mihomo-tasks.pid
 MIHOMO_API="${MIHOMO_API:-http://127.0.0.1:9090}"
 MIHOMO_SECRET="${MIHOMO_SECRET:-change-me}"
 SPEEDTEST_EVERY_H="${SPEEDTEST_EVERY_H:-3}"
+SPEEDTEST_EVERY_M="${SPEEDTEST_EVERY_M:-0}"
 NODEHEALTH_EVERY_H="${NODEHEALTH_EVERY_H:-6}"
 if [ -f $PIDF ] && kill -0 "$(cat $PIDF 2>/dev/null)" 2>/dev/null; then
   echo "tasks already running"
@@ -57,7 +58,13 @@ while true; do
 
   # каждые 2 часа — замер скорости узлов и закрепление лучшего
   HM=$(date +%Y%m%d%H)
-  if [ "$SPEEDTEST_EVERY_H" -gt 0 ] && [ $((HN % SPEEDTEST_EVERY_H)) -eq 0 ] && [ "$HM" != "$(cat $BASE/.last_speed 2>/dev/null)" ]; then
+  RUNSPEED=0
+  if [ "$SPEEDTEST_EVERY_M" -gt 0 ]; then
+    [ $((MN % SPEEDTEST_EVERY_M)) -eq 0 ] && RUNSPEED=1
+  elif [ "$SPEEDTEST_EVERY_H" -gt 0 ] && [ $((HN % SPEEDTEST_EVERY_H)) -eq 0 ]; then
+    RUNSPEED=1
+  fi
+  if [ "$RUNSPEED" = "1" ] && [ "$HM" != "$(cat $BASE/.last_speed 2>/dev/null)" ]; then
     echo "$HM" > $BASE/.last_speed
     echo "$(date '+%F %T') задача: проверка узлов и замер скорости" >> $LOG
     /opt/etc/mihomo/fullcheck.sh

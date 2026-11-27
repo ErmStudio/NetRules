@@ -78,6 +78,21 @@ while true; do
     fi
   fi
 
+  # возвращаем сохранённый узел ITX
+  if [ -f /opt/var/run/itx.pid ] && kill -0 "$(cat /opt/var/run/itx.pid 2>/dev/null)" 2>/dev/null; then
+    PIN=""
+    . /opt/etc/mihomo/ui.conf 2>/dev/null
+    PIN="${ITX_PIN:-}"
+    if [ -n "$PIN" ]; then
+      CUR=$(/opt/bin/curl -s --max-time 5 -H "$AUTH" "$API/proxies/ITX" 2>/dev/null | sed -n 's/.*"now":"\([^"]*\)".*/\1/p')
+      if [ "$CUR" != "$PIN" ]; then
+        /opt/bin/curl -s -o /dev/null --max-time 8 -X PUT -H "$AUTH" \
+          -H "Content-Type: application/json" -d "{\"name\":\"$PIN\"}" "$API/proxies/ITX" 2>/dev/null
+        say "восстановил узел ITX: $PIN"
+      fi
+    fi
+  fi
+
   # не мешаем проверке узлов
   if [ -f /tmp/mh-checking ] || [ -f /tmp/mh-fullcheck ]; then
     sleep 10

@@ -29,6 +29,7 @@ google_itx=0; grep -q "gemini.google.com" /opt/etc/mihomo/rules-itx.yaml 2>/dev/
 autosub=0; . /opt/etc/mihomo/ui.conf 2>/dev/null; [ "${AUTO_SUB:-1}" = "1" ] && autosub=1
 autosub_h="${AUTO_SUB_H:-4}"
 tg_notify=0; . /opt/etc/mihomo/ui.conf 2>/dev/null; [ "${TG_NOTIFY:-1}" = "1" ] && tg_notify=1
+ads=0; grep -q "adspector" /opt/etc/mihomo/rules-ads.yaml 2>/dev/null && ads=1
 zapret_up=0; ps 2>/dev/null | grep -q '[n]fqws2' && zapret_up=1
 nodes=$(grep -c '^    server: ' "$CFG" 2>/dev/null); [ -z "$nodes" ] && nodes=0
 lu=$(cat "$STATUS" 2>/dev/null)
@@ -107,8 +108,8 @@ case "$act" in
     [ -z "$load" ] && load=0
     [ -z "$mihomem" ] && mihomem=0
     tg=0; grep -q '^TG_TOKEN="..' /opt/etc/mihomo/ui.conf 2>/dev/null && tg=1
-    printf '{"mihomo":%s,"vpn":%s,"video":%s,"social":%s,"zapret":%s,"itx":%s,"google_itx":%s,"tg":%s,"tg_notify":%s,"autosub":%s,"autosub_h":"%s","nodes":%s,"last":"%s","uptime":%s,"memtotal":%s,"memavail":%s,"node":"%s","country":"%s","delay":"%s","mup":%s,"load":"%s","temp":%s,"cpu":%s,"mihomem":%s,"dl":%s,"ul":%s}\n' \
-      "$mihomo_up" "$vpn_on" "$video_on" "$social_on" "$zapret_up" "$itx_up" "$google_itx" "$tg" "$tg_notify" "$autosub" "$(esc "$autosub_h")" "$nodes" "$(esc "$lu")" "$up" "$memtot" "$memav" \
+    printf '{"mihomo":%s,"vpn":%s,"video":%s,"social":%s,"zapret":%s,"itx":%s,"google_itx":%s,"tg":%s,"tg_notify":%s,"autosub":%s,"ads":%s,"autosub_h":"%s","nodes":%s,"last":"%s","uptime":%s,"memtotal":%s,"memavail":%s,"node":"%s","country":"%s","delay":"%s","mup":%s,"load":"%s","temp":%s,"cpu":%s,"mihomem":%s,"dl":%s,"ul":%s}\n' \
+      "$mihomo_up" "$vpn_on" "$video_on" "$social_on" "$zapret_up" "$itx_up" "$google_itx" "$tg" "$tg_notify" "$autosub" "$ads" "$(esc "$autosub_h")" "$nodes" "$(esc "$lu")" "$up" "$memtot" "$memav" \
       "$(esc "$node")" "$(esc "$country")" "$(esc "$delay")" "$mup" "$(esc "$load")" "$temp" "$cpu_pct" "$mihomem" "$dl" "$ul"
     ;;
 
@@ -355,9 +356,16 @@ print(json.dumps(out, ensure_ascii=False))
 
   set_interval)
     h=$(printf '%s' "$q" | sed -n 's/.*hours=\([0-9]*\).*/\1/p')
+    m=$(printf '%s' "$q" | sed -n 's/.*minutes=\([0-9]*\).*/\1/p')
+    case "$m" in 15|30) h=0 ;; *) m=0 ;; esac
     case "$h" in 0|1|2|3|4|6|8|12|24) ;; *) h=3 ;; esac
     CONF=/opt/etc/mihomo/ui.conf
     touch "$CONF"
+    if grep -q '^SPEEDTEST_EVERY_M=' "$CONF" 2>/dev/null; then
+      sed -i "s|^SPEEDTEST_EVERY_M=.*|SPEEDTEST_EVERY_M=\"$m\"|" "$CONF"
+    else
+      printf '\nSPEEDTEST_EVERY_M="%s"\n' "$m" >> "$CONF"
+    fi
     if grep -q '^SPEEDTEST_EVERY_H=' "$CONF" 2>/dev/null; then
       sed -i "s|^SPEEDTEST_EVERY_H=.*|SPEEDTEST_EVERY_H=\"$h\"|" "$CONF"
     else
@@ -368,7 +376,7 @@ print(json.dumps(out, ensure_ascii=False))
       rm -f /opt/var/run/mihomo-tasks.pid
       /opt/etc/init.d/S97mihomo-autoupdate start >/dev/null 2>&1
     ) >/dev/null 2>&1 &
-    printf 'Content-Type: application/json\n\n{"ok":true,"hours":%s}\n' "$h"
+    printf 'Content-Type: application/json\n\n{"ok":true,"hours":%s,"minutes":%s}\n' "$h" "$m"
     ;;
   itx_on)
     /opt/etc/init.d/S95itx start >/dev/null 2>&1
@@ -415,6 +423,12 @@ print(json.dumps({'now': d.get('now') or '', 'all': d.get('all') or []}, ensure_
     name=$(printf '%s' "$q" | sed -n 's/.*name=\([^&]*\).*/\1/p' | sed 's/%20/ /g;s/%2F/\//g')
     /opt/bin/curl -s -o /dev/null --max-time 10 -X PUT -H "Authorization: Bearer $SECRET" \
       -H "Content-Type: application/json" -d "{\"name\":\"$name\"}" "$API/proxies/ITX" 2>/dev/null
+    CONF=/opt/etc/mihomo/ui.conf
+    if grep -q '^ITX_PIN=' "$CONF" 2>/dev/null; then
+      sed -i "s|^ITX_PIN=.*|ITX_PIN=\"$name\"|" "$CONF"
+    else
+      printf '\nITX_PIN="%s"\n' "$name" >> "$CONF"
+    fi
     printf 'Content-Type: application/json\n\n{"ok":true,"now":"%s"}\n' "$name"
     ;;
 
@@ -495,6 +509,18 @@ print(json.dumps({'now': d.get('now') or '', 'all': d.get('all') or []}, ensure_
       rm -f /opt/var/run/mihomo-tasks.pid
       /opt/etc/init.d/S97mihomo-autoupdate start >/dev/null 2>&1 ) >/dev/null 2>&1 &
     printf 'Content-Type: application/json\n\n{"ok":true,"hours":%s}\n' "$h"
+    ;;
+
+  ads_on)
+    /bin/cp /opt/etc/mihomo/rules-ads.yaml.full /opt/etc/mihomo/rules-ads.yaml 2>/dev/null
+    /opt/bin/curl -s -o /dev/null --max-time 10 -X PUT -H "Authorization: Bearer $SECRET" "$API/providers/rules/ads" 2>/dev/null
+    printf 'Content-Type: application/json\n\n{"ok":true,"ads":1}\n'
+    ;;
+
+  ads_off)
+    printf 'payload: []\n' > /opt/etc/mihomo/rules-ads.yaml
+    /opt/bin/curl -s -o /dev/null --max-time 10 -X PUT -H "Authorization: Bearer $SECRET" "$API/providers/rules/ads" 2>/dev/null
+    printf 'Content-Type: application/json\n\n{"ok":true,"ads":0}\n'
     ;;
 
   config)
