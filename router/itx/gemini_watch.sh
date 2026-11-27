@@ -38,12 +38,27 @@ echo "$CUR|$((NOW + 21600))" >> "$FROZEN"
 say "gemini: $CUR заморожен на 6 часов"
 
 TRIES=0
+# порядок перебора: сначала самые быстрые узлы ITX по данным последнего замера
+ORDER=$(/opt/bin/python3 -c "
+import json
+try:
+    d = json.load(open('/opt/etc/mihomo/speedtest.json'))
+except Exception:
+    raise SystemExit
+rows = [(x.get('mbps', 0), x.get('node', '')) for x in d.get('results', []) if x.get('src') == 'itx']
+rows.sort(reverse=True)
+for _, n in rows:
+    print(n)
+" 2>/dev/null)
+
 while IFS='|' read -r NAME NPORT REST; do
   [ -z "$NAME" ] && continue
   [ "$NAME" = "$CUR" ] && continue
-  [ "$TRIES" -ge 3 ] && break
+  [ "$TRIES" -ge 5 ] && break
   UNTIL=$(awk -F'|' -v n="$NAME" '$1==n{print $2; exit}' "$FROZEN" 2>/dev/null)
   if [ -n "$UNTIL" ] && [ "$UNTIL" -gt "$NOW" ]; then continue; fi
+  # пропускаем узлы, которых нет в списке самых быстрых (если замер был)
+  if [ -n "$ORDER" ] && ! printf '%s\n' "$ORDER" | grep -qxF "$NAME"; then continue; fi
   R=$(/opt/etc/itx/gemini_check.sh "$NPORT")
   TRIES=$((TRIES + 1))
   say "gemini: пробую $NAME → $R"
