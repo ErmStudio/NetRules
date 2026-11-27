@@ -190,10 +190,11 @@ section{animation:fade .35s ease}
   <section id="view-overview">
     <div class="grid">
       <div class="card"><div class="k">Аптайм роутера</div><div class="v" id="v-uptime">—</div><div class="h">с последней перезагрузки</div></div>
+      <div class="card"><div class="k">Аптайм mihomo</div><div class="v" id="v-mup">—</div><div class="h" id="v-mihomem">—</div></div>
       <div class="card"><div class="k">CPU роутера</div><div class="v" id="v-load">—</div><div class="h">load average 1 мин</div></div>
       <div class="card"><div class="k">RAM</div><div class="v" id="v-mem">—</div><div class="h" id="v-memt">—</div></div>
       <div class="card"><div class="k">Узлы VPN</div><div class="v" id="v-nodes">—</div><div class="h" id="v-health">—</div></div>
-      <div class="card"><div class="k">mihomo</div><div class="v" id="v-mihomem">—</div><div class="h" id="v-mup">—</div></div>
+      
       <div class="card"><div class="k">Обновление</div><div class="v" id="v-last" style="font-size:15px;margin-top:8px">—</div><div class="h" id="v-last2">подписки</div></div>
       <div class="card wide"><div class="k">Текущий узел</div><div class="kv"><div class="kvi"><div class="v" id="v-delay">—</div><div class="h" id="v-node">—</div></div><canvas id="delaychart" width="200" height="48"></canvas></div></div>
       <div class="card wide"><div class="k">Трафик VPN</div><div class="kv"><div class="kvi"><div class="v" id="v-dl">—</div><div class="h" id="v-ul">—</div></div><canvas id="spark" width="200" height="48"></canvas></div></div>
@@ -443,8 +444,8 @@ function refresh(){
     animNum($('#v-mem'),s.memavail,function(v){return Math.round(v/1024)+' МБ';});
     $('#v-memt').textContent='из '+Math.round(s.memtotal/1024)+' МБ';
     $('#v-load').textContent=(s.load||'0')+'';
-    $('#v-mihomem').textContent=(s.mihomem||0)+' МБ';
-    $('#v-mup').textContent='аптайм '+fmtUp(s.mup);
+    $('#v-mup').textContent=fmtUp(s.mup);
+    $('#v-mihomem').textContent='с последней перезагрузки · '+(s.mihomem||0)+' МБ';
     var delEl=$('#v-delay');
     delEl.textContent=s.delay?(s.delay+' мс'):'—';
     delEl.style.color=s.delay?(s.delay<70?'#34d399':(s.delay<150?'#fbbf24':'#f87171')):'';
