@@ -66,11 +66,11 @@ while true; do
   fi
 
   # правила перенаправления могли пропасть (ndm перезаписывает nat) — восстанавливаем
-  if ! iptables -t nat -S 2>/dev/null | grep -q "redir ports 7892"; then
+  if ! iptables -t nat -S 2>/dev/null | grep -q "to-ports 7892"; then
     say "правила перенаправления пропали — восстанавливаю"
     /bin/sh /opt/etc/mihomo/rules.sh apply >> $LOG 2>&1
     sleep 1
-    if iptables -t nat -S 2>/dev/null | grep -q "redir ports 7892"; then
+    if iptables -t nat -S 2>/dev/null | grep -q "to-ports 7892"; then
       say "правила восстановлены"
       notify_once "NetRules: правила перенаправления пропали и были восстановлены"
     else

@@ -36,9 +36,12 @@ measure() {
   echo "$B|$T"
 }
 
-MAP=$(/opt/bin/wget -q -O - --timeout=20 --header="$AUTH" \
-  "$API/group/AUTO/delay?url=http%3A%2F%2Fwww.gstatic.com%2Fgenerate_204&timeout=3000" 2>/dev/null)
-LIST=$(printf '%s' "$MAP" | tr ',' '\n' | sed 's/[{}"]//g;s/^ *//;s/ *$//' \
+# кандидаты из обеих подписок: chroma (AUTO) + ITX
+U="url=http%3A%2F%2Fwww.gstatic.com%2Fgenerate_204&timeout=3000"
+MAP=$(/opt/bin/wget -q -O - --timeout=20 --header="$AUTH" "$API/group/AUTO/delay?$U" 2>/dev/null)
+MAP2=$(/opt/bin/wget -q -O - --timeout=25 --header="$AUTH" "$API/group/ITXFAST/delay?$U" 2>/dev/null)
+LIST=$( { printf '%s' "$MAP"; printf '
+'; printf '%s' "$MAP2"; } | tr ',' '\n' | sed 's/[{}"]//g;s/^ *//;s/ *$//' \
   | awk -F: 'NF==2 && $2>0 && $2<800 {print $2" "$1}' | sort -n | head -"$CAND")
 
 [ -z "$LIST" ] && { echo "$(date '+%F %T') нет данных о задержках" >> $LOG; exit 1; }
