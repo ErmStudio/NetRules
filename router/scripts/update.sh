@@ -13,8 +13,9 @@ fail() { echo "FAIL|$(now)|$1" > $STATUS; echo "$(now) FAIL: $1" >> $LOG; exit 1
 echo "=== $(date '+%Y-%m-%d %H:%M:%S') update start ===" >> $LOG
 /opt/bin/wget -q -U "mihomo/1.19.33" -O "$BASE/sub.json" "$URL" || fail "не скачалась подписка"
 echo "downloaded $(wc -c < $BASE/sub.json) bytes" >> $LOG
-NODES=$(/opt/bin/python3 "$BASE/update.py" 2>&1 | tail -1)
-echo "$NODES" >> $LOG
+OUT=$(/opt/bin/python3 "$BASE/update.py" 2>&1)
+echo "$OUT" >> $LOG
+NODES=$(printf "%s\n" "$OUT" | grep "^ok, nodes=" | tail -1)
 echo "$NODES" | grep -q '^ok, nodes=' || fail "конвертация не удалась"
 CNT=$(echo "$NODES" | sed 's/.*nodes=//')
 /opt/etc/init.d/S99mihomo restart >> $LOG 2>&1

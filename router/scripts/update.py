@@ -136,7 +136,7 @@ def write_countries():
     with open(os.path.join(BASE, "countries.txt"), "w", encoding="utf-8") as f:
         for k in sorted(m):
             f.write("%s|%s\n" % (k, m[k]))
-    print("countries=%d" % len(m))
+    print("countries=%d" % len(m), file=sys.stderr)
 
 def main():
     px = load_proxies(os.path.join(BASE, "sub.json"))
