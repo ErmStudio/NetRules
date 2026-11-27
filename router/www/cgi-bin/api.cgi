@@ -268,6 +268,24 @@ print(json.dumps(out, ensure_ascii=False))
     fi
     ;;
 
+  bulk_proxy)
+    hosts=$(printf '%s' "$q" | sed -n 's/.*hosts=\([^&]*\).*/\1/p' | sed 's/%2C/,/g;s/%2E/./g')
+    added=0; skipped=0; OLDIFS=$IFS; IFS=','
+    for h in $hosts; do
+      [ -z "$h" ] && continue
+      case "$h" in
+        *[A-Za-z]*) ;;
+        *) skipped=$((skipped+1)); continue ;;
+      esac
+      if grep -q "DOMAIN-SUFFIX,$h\$" "$RULES" 2>/dev/null; then continue; fi
+      sed -i "s|^  # === SOCIAL-BEGIN ===|  - DOMAIN-SUFFIX,$h\n\n  # === SOCIAL-BEGIN ===|" "$RULES"
+      added=$((added+1))
+    done
+    IFS=$OLDIFS
+    reload_rules
+    printf 'Content-Type: application/json\n\n{"ok":true,"added":%s,"skipped":%s}\n' "$added" "$skipped"
+    ;;
+
   probe)
     host=$(printf '%s' "$q" | sed -n 's/.*host=\([^&]*\).*/\1/p' | sed 's/%2E/./g')
     [ -z "$host" ] && { printf 'Content-Type: application/json\n\n{"ok":false,"error":"нет host"}\n'; exit 0; }
