@@ -64,8 +64,10 @@ pre{margin:0;background:#060b14;border:1px solid var(--line);border-radius:12px;
 .srow{display:flex;justify-content:space-between;gap:12px;padding:8px 12px;border-radius:9px;font-size:12.5px;color:#c3d3ea;background:rgba(255,255,255,.03);margin-bottom:6px}
 .mini{padding:5px 10px;font-size:11px;border-radius:8px;white-space:nowrap}
 .card.compact{padding:12px 14px;border-radius:13px}
-.speed-cards>.card{display:flex;flex-direction:column;justify-content:flex-end;min-height:104px;padding:14px 16px;gap:6px}
-.speed-cards .big{font-size:30px;line-height:1}
+.speed-cards>.card{display:flex;flex-direction:column;justify-content:center;min-height:78px;padding:9px 14px;gap:2px}
+.speed-cards .big{font-size:25px;line-height:1.05}
+.speed-cards .lbl{font-size:10.5px;margin-top:1px}
+.speedrow{gap:8px}
 .speedrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .speedrow .seg{margin-left:auto}
 @media(max-width:700px){
@@ -131,8 +133,10 @@ body.light pre,body.light textarea{background:#f7faff;color:#26364f;border-color
 body.light .srow{background:rgba(20,40,80,.045);color:#26364f}
 body.light .mini{padding:5px 10px;font-size:11px;border-radius:8px;white-space:nowrap}
 .card.compact{padding:12px 14px;border-radius:13px}
-.speed-cards>.card{display:flex;flex-direction:column;justify-content:flex-end;min-height:104px;padding:14px 16px;gap:6px}
-.speed-cards .big{font-size:30px;line-height:1}
+.speed-cards>.card{display:flex;flex-direction:column;justify-content:center;min-height:78px;padding:9px 14px;gap:2px}
+.speed-cards .big{font-size:25px;line-height:1.05}
+.speed-cards .lbl{font-size:10.5px;margin-top:1px}
+.speedrow{gap:8px}
 .speedrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .speedrow .seg{margin-left:auto}
 @media(max-width:700px){
@@ -343,7 +347,7 @@ button.primary:hover{box-shadow:0 12px 30px rgba(79,140,255,.5)}
 
       <div class="card compact">
         <div class="speedrow">
-          <span class="lbl">период автопроверки</span>
+          <span class="lbl" style="font-size:11px;opacity:.75">период автопроверки</span>
           <span class="seg" id="int-mode">
             <button data-h="1">1 ч</button>
             <button data-h="2">2 ч</button>
