@@ -292,6 +292,7 @@ button.primary:hover{box-shadow:0 12px 30px rgba(79,140,255,.5)}
       <div class="pill"><span class="dot" id="d-social"></span>соцсети</div>
       <div class="pill"><span class="dot" id="d-video"></span>видео</div>
       <div class="pill"><span class="dot" id="d-zapret"></span>zapret</div>
+      <div class="pill" id="p-itx"><span class="dot" id="d-itx"></span>xray</div>
     </div>
   </header>
 
@@ -738,6 +739,7 @@ function loadCfg(){
 function refresh(){
   api('action=status').then(function(s){
     dot('#d-mihomo',s.mihomo);dot('#d-vpn',s.vpn);dot('#d-social',s.social);dot('#d-video',s.video);dot('#d-zapret',s.zapret);
+    if($('#d-itx')) dot('#d-itx',s.itx);
     $('#v-uptime').textContent=fmtUp(s.uptime);
     animNum($('#v-nodes'),s.nodes,function(v){return Math.round(v);});
     animNum($('#v-mem'),s.memavail,function(v){return Math.round(v/1024)+' МБ';});
