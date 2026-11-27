@@ -64,8 +64,7 @@ pre{margin:0;background:#060b14;border:1px solid var(--line);border-radius:12px;
 .srow{display:flex;justify-content:space-between;gap:12px;padding:8px 12px;border-radius:9px;font-size:12.5px;color:#c3d3ea;background:rgba(255,255,255,.03);margin-bottom:6px}
 .mini{padding:5px 10px;font-size:11px;border-radius:8px;white-space:nowrap}
 .card.compact{padding:12px 14px;border-radius:13px}
-.speed-cards>.card{display:flex;flex-direction:column;justify-content:flex-start;min-height:0;padding:11px 14px;gap:2px}
-.speed-cards .big{font-size:25px;line-height:1.05}
+.speed-cards>.speed-cards .big{font-size:25px;line-height:1.05}
 .speed-cards .lbl{font-size:10.5px;margin-top:1px}
 select, select option{background:#151a24;color:#e8eefc;border:1px solid rgba(255,255,255,.14)}
 select option:checked{background:#243049}
@@ -79,6 +78,16 @@ body.light select, body.light select option{background:#fff;color:#111}
 #v-dl{font-size:clamp(16px,1.7vw,21px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.3px}
 #v-ul{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 @media(max-width:700px){ .kv canvas{flex:0 0 45%;width:45%} #v-dl{font-size:19px} }
+/* компактная сетка */
+.grid,.col,.acts-5{gap:9px;margin-bottom:9px}
+.card{padding:12px 14px;border-radius:14px}
+.card .k{margin-bottom:3px}
+.card.compact{padding:10px 13px}
+header{padding-bottom:4px}
+nav{margin-bottom:9px}
+.v{margin-top:3px}
+.health .big{line-height:1.05}
+footer{margin-top:6px;padding-top:8px}
 .speedrow{gap:8px}
 #check-state:empty{display:none}
 .speedrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
@@ -101,8 +110,7 @@ body.light select, body.light select option{background:#fff;color:#111}
   
   
 }
-.speed-cards>.card{display:flex;flex-direction:column;gap:10px;min-height:126px;padding:14px 16px}
-.speed-cards>.card>.health{gap:22px;align-items:flex-end}
+.speed-cards>.speed-cards>.card>.health{gap:22px;align-items:flex-end}
 .speed-cards .k{font-size:11px}
 .rowline{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-height:30px}
 .rowline .seg{margin-left:auto}
@@ -146,8 +154,7 @@ body.light pre,body.light textarea{background:#f7faff;color:#26364f;border-color
 body.light .srow{background:rgba(20,40,80,.045);color:#26364f}
 body.light .mini{padding:5px 10px;font-size:11px;border-radius:8px;white-space:nowrap}
 .card.compact{padding:12px 14px;border-radius:13px}
-.speed-cards>.card{display:flex;flex-direction:column;justify-content:flex-start;min-height:0;padding:11px 14px;gap:2px}
-.speed-cards .big{font-size:25px;line-height:1.05}
+.speed-cards>.speed-cards .big{font-size:25px;line-height:1.05}
 .speed-cards .lbl{font-size:10.5px;margin-top:1px}
 .speedrow{gap:8px}
 #check-state:empty{display:none}
@@ -171,8 +178,7 @@ body.light .mini{padding:5px 10px;font-size:11px;border-radius:8px;white-space:n
   
   
 }
-.speed-cards>.card{display:flex;flex-direction:column;gap:10px;min-height:126px;padding:14px 16px}
-.speed-cards>.card>.health{gap:22px;align-items:flex-end}
+.speed-cards>.speed-cards>.card>.health{gap:22px;align-items:flex-end}
 .speed-cards .k{font-size:11px}
 .rowline{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-height:30px}
 .rowline .seg{margin-left:auto}

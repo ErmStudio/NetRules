@@ -63,12 +63,26 @@ if sync_kit; then
 else
   echo "$(date '+%F %T') ВНИМАНИЕ: restore-kit не скопирован" >> $LOG
 fi
+# проверка целостности restore-kit: ключевые файлы должны быть на месте
+KITOK=1
+MISSING=""
+for f in ui.conf sub.url config.yaml scripts/www/index.html scripts/www/cgi-bin/api.cgi; do
+  if [ ! -s "/storage/restore-kit/$f" ]; then
+    KITOK=0
+    MISSING="$MISSING $f"
+  fi
+done
 {
   echo "date: $(date '+%F %T')"
   echo "restore-kit-kb: ${KIT_KB:-0}"
   echo "daily-kb: $(du -sk "$DST" 2>/dev/null | awk '{print $1}')"
+  echo "integrity: $([ "$KITOK" = "1" ] && echo OK || echo "FAIL:${MISSING}")"
   echo "storage: $(df -k /storage 2>/dev/null | tail -1)"
 } > "$STATUS" 2>/dev/null
+if [ "$KITOK" = "0" ]; then
+  echo "$(date '+%F %T') restore-kit НЕПОЛНЫЙ:$MISSING" >> $LOG
+  /bin/sh /opt/etc/mihomo/notify.sh "NetRules: restore-kit неполный —$MISSING" >/dev/null 2>&1 &
+fi
 
 # ротация ежедневных бэкапов: 7 копий
 ls -1dt /storage/mihomo-backup/*/ 2>/dev/null | tail -n +8 | while read d; do rm -rf "$d"; done

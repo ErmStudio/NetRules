@@ -50,6 +50,16 @@ while true; do
     fi
   fi
 
+  # 04:30 ежедневно — обновление второй подписки (ITX)
+  if [ -x /opt/etc/itx/update.sh ] && [ "$H" = "04" ] && [ "$MN" = "30" ]; then
+    MARK="$D$H$MN"
+    if [ "$MARK" != "$(cat $BASE/.last_itx 2>/dev/null)" ]; then
+      echo "$MARK" > $BASE/.last_itx
+      echo "$(date '+%F %T') задача: обновление ITX" >> $LOG
+      ( /opt/etc/itx/update.sh >/dev/null 2>&1 & )
+    fi
+  fi
+
   # 05:10 ежедневно — бэкап конфигов
   if [ "$H" = "05" ] && [ "$D" != "$(cat $BASE/.last_backup 2>/dev/null)" ]; then
     echo "$D" > $BASE/.last_backup
