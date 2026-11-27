@@ -27,11 +27,14 @@ MIHOMO_UI_URL="http://mihomo.lan:9090/ui/metacubexd/"
 
 # --- Замер скорости (влияет на расход трафика подписки) ---
 # сколько узлов проверять (по 1.5 МБ каждый)
-# SPEEDTEST_CANDIDATES=6
+# SPEEDTEST_CANDIDATES=10
 # размер тестового файла в байтах
 # SPEEDTEST_BYTES=1500000
 # как часто запускать (в часах; 0 — только вручную)
 # SPEEDTEST_EVERY_H=3
+
+# как часто проверять узлы на живость (в часах; 0 — только вручную)
+# NODEHEALTH_EVERY_H=6
 
 # --- Уведомления в Telegram (необязательно) ---
 # Создайте бота через @BotFather, узнайте chat_id через @userinfobot

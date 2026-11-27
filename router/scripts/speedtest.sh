@@ -1,7 +1,7 @@
 #!/bin/sh
 # Замер скорости узлов и закрепление лучшего.
 # Настройки (необязательно) в /opt/etc/mihomo/ui.conf:
-#   SPEEDTEST_CANDIDATES=6      сколько лучших по пингу проверять
+#   SPEEDTEST_CANDIDATES=10     сколько лучших по пингу проверять
 #   SPEEDTEST_BYTES=1500000     размер тестового файла (байт)
 PATH=/opt/bin:/opt/sbin:/bin:/sbin:/usr/bin:/usr/sbin
 export PATH
@@ -9,7 +9,7 @@ export PATH
 API="${MIHOMO_API:-http://127.0.0.1:9090}"
 SECRET="${MIHOMO_SECRET:-change-me}"
 AUTH="Authorization: Bearer $SECRET"
-CAND="${SPEEDTEST_CANDIDATES:-6}"
+CAND="${SPEEDTEST_CANDIDATES:-10}"
 BYTES="${SPEEDTEST_BYTES:-1500000}"
 SPEEDURL="https://speed.cloudflare.com/__down?bytes=$BYTES"
 OUT=/opt/etc/mihomo/speedtest.json

@@ -7,6 +7,7 @@ PIDF=/opt/var/run/mihomo-tasks.pid
 MIHOMO_API="${MIHOMO_API:-http://127.0.0.1:9090}"
 MIHOMO_SECRET="${MIHOMO_SECRET:-change-me}"
 SPEEDTEST_EVERY_H="${SPEEDTEST_EVERY_H:-3}"
+NODEHEALTH_EVERY_H="${NODEHEALTH_EVERY_H:-6}"
 if [ -f $PIDF ] && kill -0 "$(cat $PIDF 2>/dev/null)" 2>/dev/null; then
   echo "tasks already running"
   exit 0
@@ -24,6 +25,15 @@ while true; do
   if [ "$HM2" != "$(cat $BASE/.last_hist 2>/dev/null)" ]; then
     echo "$HM2" > $BASE/.last_hist
     /opt/etc/mihomo/delayhist.sh
+  fi
+  # проверка узлов на живость каждые N часов
+  if [ "$NODEHEALTH_EVERY_H" -gt 0 ] && [ $((HN % NODEHEALTH_EVERY_H)) -eq 0 ] && [ "$MN" = "05" ]; then
+    HMH=$(date +%Y%m%d%H)
+    if [ "$HMH" != "$(cat $BASE/.last_health 2>/dev/null)" ]; then
+      echo "$HMH" > $BASE/.last_health
+      echo "$(date '+%F %T') задача: проверка узлов" >> $LOG
+      /opt/etc/mihomo/checkall.sh >/dev/null 2>&1
+    fi
   fi
   # каждые 15 минут — снапшот трафика (устойчив к перезапускам mihomo)
   MN=$(date +%M)
