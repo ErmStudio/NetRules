@@ -18,7 +18,10 @@ echo "$OUT" >> $LOG
 NODES=$(printf "%s\n" "$OUT" | grep "^ok, nodes=" | tail -1)
 echo "$NODES" | grep -q '^ok, nodes=' || fail "конвертация не удалась"
 CNT=$(echo "$NODES" | sed 's/.*nodes=//')
-/opt/etc/init.d/S99mihomo restart >> $LOG 2>&1
+# горячая перезагрузка конфига (без разрыва соединений)
+/opt/bin/curl -s -o /dev/null --max-time 20 -X PUT -H "Authorization: Bearer $MIHOMO_SECRET" \
+  -H "Content-Type: application/json" -d "{\"path\":\"/opt/etc/mihomo/config.yaml\"}" \
+  "http://127.0.0.1:9090/configs?force=false" 2>/dev/null
 sleep 2
 if netstat -ltn 2>/dev/null | grep -q ":7892"; then
   echo "OK|$(now)|$CNT" > $STATUS
