@@ -39,6 +39,7 @@ for k, v in d.items():
         print(k)
 " > $TMP
 
+echo "$(date '+%F %T') старт проверки узлов" >> $LOG
 TOT=$(wc -l < $TMP | tr -d ' ')
 [ "$TOT" -eq 0 ] && { echo "нет узлов" >> $LOG; exit 1; }
 
