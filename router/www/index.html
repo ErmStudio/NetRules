@@ -62,7 +62,11 @@ pre{margin:0;background:#060b14;border:1px solid var(--line);border-radius:12px;
 .tab2.active{background:rgba(79,140,255,.14);color:#cfe0ff;border-color:rgba(79,140,255,.3)}
 .hidden{display:none}
 .srow{display:flex;justify-content:space-between;gap:12px;padding:8px 12px;border-radius:9px;font-size:12.5px;color:#c3d3ea;background:rgba(255,255,255,.03);margin-bottom:6px}
-.srow.warn{background:rgba(248,113,113,.10);border:1px solid rgba(248,113,113,.22)}
+.srow.warn{background:rgba(248,113,113,.075);border-left:2px solid #f87171;border-radius:8px}
+#net-domains,#net-devices{max-height:340px;overflow-y:auto;overflow-x:hidden;padding-right:4px;scrollbar-width:thin}
+#net-domains::-webkit-scrollbar,#net-devices::-webkit-scrollbar{width:6px}
+#net-domains::-webkit-scrollbar-thumb,#net-devices::-webkit-scrollbar-thumb{background:rgba(120,160,255,.35);border-radius:4px}
+#net-domains::-webkit-scrollbar-track,#net-devices::-webkit-scrollbar-track{background:transparent}
 .srow.best{background:rgba(52,211,153,.12);color:#bff5dc;border:1px solid rgba(52,211,153,.25)}
 .srow .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .health{display:flex;gap:26px;flex-wrap:wrap;align-items:flex-end;margin-bottom:6px}
@@ -87,7 +91,11 @@ body.light .aurora{opacity:.2}
 body.light h1{background:linear-gradient(90deg,#12203a,#2a5cc4);-webkit-background-clip:text;background-clip:text;color:transparent}
 body.light pre,body.light textarea{background:#f7faff;color:#26364f;border-color:rgba(20,40,80,.13)}
 body.light .srow{background:rgba(20,40,80,.045);color:#26364f}
-body.light .srow.warn{background:rgba(248,113,113,.10);border:1px solid rgba(248,113,113,.22)}
+body.light .srow.warn{background:rgba(248,113,113,.075);border-left:2px solid #f87171;border-radius:8px}
+#net-domains,#net-devices{max-height:340px;overflow-y:auto;overflow-x:hidden;padding-right:4px;scrollbar-width:thin}
+#net-domains::-webkit-scrollbar,#net-devices::-webkit-scrollbar{width:6px}
+#net-domains::-webkit-scrollbar-thumb,#net-devices::-webkit-scrollbar-thumb{background:rgba(120,160,255,.35);border-radius:4px}
+#net-domains::-webkit-scrollbar-track,#net-devices::-webkit-scrollbar-track{background:transparent}
 .srow.best{background:rgba(52,211,153,.18);color:#0b6b4d;border-color:rgba(16,150,110,.3)}
 body.light nav button.active{background:rgba(79,140,255,.18);color:#12203a}
 body.light .card{box-shadow:0 6px 18px rgba(20,40,80,.06)}

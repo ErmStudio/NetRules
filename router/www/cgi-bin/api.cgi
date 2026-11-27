@@ -244,7 +244,7 @@ for x in c:
         if a > stallage[h]:
             stallage[h] = a
 
-doms = sorted(dom.items(), key=lambda kv: (-stall[kv[0]], -kv[1]))[:12]
+doms = sorted(dom.items(), key=lambda kv: (-stall[kv[0]], -kv[1]))[:20]
 out = {
   'total': len(c),
   'up': d.get('uploadTotal', 0),
