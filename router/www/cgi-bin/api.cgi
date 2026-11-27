@@ -84,6 +84,15 @@ case "$act" in
     printf 'Content-Type: application/json\n\n'
     load=$(awk '{print $1}' /proc/loadavg 2>/dev/null)
     TZ0=$(cat /sys/class/thermal/thermal_zone0/temp 2>/dev/null)
+    cpu_pct=0
+    if [ -r /proc/stat ]; then
+      CUR=$(awk '/^cpu /{t=$2+$3+$4; i=$5; print t" "i}' /proc/stat)
+      PREV=$(cat /tmp/mh-cpu.prev 2>/dev/null)
+      echo "$CUR" > /tmp/mh-cpu.prev
+      if [ -n "$PREV" ]; then
+        cpu_pct=$(echo "$PREV $CUR" | awk '{dt=$3-$1; di=$4-$2; s=dt+di; if(s>0) printf "%d", dt*100/s; else print 0}')
+      fi
+    fi
     temp=0
     case "$TZ0" in
       [0-9]*) temp=$((TZ0 / 1000)) ;;
@@ -97,9 +106,9 @@ case "$act" in
     [ -z "$load" ] && load=0
     [ -z "$mihomem" ] && mihomem=0
     tg=0; grep -q '^TG_TOKEN="..' /opt/etc/mihomo/ui.conf 2>/dev/null && tg=1
-    printf '{"mihomo":%s,"vpn":%s,"video":%s,"social":%s,"zapret":%s,"itx":%s,"google_itx":%s,"tg":%s,"tg_notify":%s,"autosub":%s,"nodes":%s,"last":"%s","uptime":%s,"memtotal":%s,"memavail":%s,"node":"%s","country":"%s","delay":"%s","mup":%s,"load":"%s","temp":%s,"mihomem":%s,"dl":%s,"ul":%s}\n' \
+    printf '{"mihomo":%s,"vpn":%s,"video":%s,"social":%s,"zapret":%s,"itx":%s,"google_itx":%s,"tg":%s,"tg_notify":%s,"autosub":%s,"nodes":%s,"last":"%s","uptime":%s,"memtotal":%s,"memavail":%s,"node":"%s","country":"%s","delay":"%s","mup":%s,"load":"%s","temp":%s,"cpu":%s,"mihomem":%s,"dl":%s,"ul":%s}\n' \
       "$mihomo_up" "$vpn_on" "$video_on" "$social_on" "$zapret_up" "$itx_up" "$google_itx" "$tg" "$tg_notify" "$autosub" "$nodes" "$(esc "$lu")" "$up" "$memtot" "$memav" \
-      "$(esc "$node")" "$(esc "$country")" "$(esc "$delay")" "$mup" "$(esc "$load")" "$temp" "$mihomem" "$dl" "$ul"
+      "$(esc "$node")" "$(esc "$country")" "$(esc "$delay")" "$mup" "$(esc "$load")" "$temp" "$cpu_pct" "$mihomem" "$dl" "$ul"
     ;;
 
   rules_get)

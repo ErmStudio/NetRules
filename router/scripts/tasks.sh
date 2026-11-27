@@ -38,11 +38,15 @@ while true; do
       ;;
   esac
 
-  # 06:00 ежедневно — обновление подписки
-  if [ "$H" = "06" ] && [ "$D" != "$(cat $BASE/.last_sub 2>/dev/null)" ]; then
-    echo "$D" > $BASE/.last_sub
-    echo "$(date '+%F %T') задача: обновление подписки" >> $LOG
-    [ "${AUTO_SUB:-1}" = "1" ] && /opt/etc/mihomo/update.sh
+  # обновление подписки каждые AUTO_SUB_H часов (по умолчанию 4)
+  ASH="${AUTO_SUB_H:-4}"
+  if [ "${AUTO_SUB:-1}" = "1" ] && [ "$ASH" -gt 0 ] && [ $((HN % ASH)) -eq 0 ] && [ "$MN" = "04" ]; then
+    MARK="$D$HN"
+    if [ "$MARK" != "$(cat $BASE/.last_sub 2>/dev/null)" ]; then
+      echo "$MARK" > $BASE/.last_sub
+      echo "$(date '+%F %T') задача: обновление подписки" >> $LOG
+      /opt/etc/mihomo/update.sh
+    fi
   fi
 
   # 05:10 ежедневно — бэкап конфигов
