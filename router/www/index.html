@@ -330,6 +330,7 @@ button.primary:hover{box-shadow:0 12px 30px rgba(79,140,255,.5)}
             <button style="padding:5px 10px;font-size:11.5px" onclick="checkVersion(true)">Проверить</button>
             <button class="primary" id="btn-update" style="display:none;padding:6px 12px;font-size:11.5px" onclick="doUpdate()">Обновить</button>
             <a href="https://github.com/EugeneErmakov/NetRules" target="_blank" rel="noopener" style="text-decoration:none"><button class="mini">⭐ GitHub</button></a>
+            <a id="lnk-contact" href="https://github.com/EugeneErmakov/NetRules/issues/new" target="_blank" rel="noopener" style="text-decoration:none"><button class="mini">✉ Написать разработчику</button></a>
           </span>
         </div>
         <div class="h" id="upd-state" style="margin-top:6px;white-space:normal;font-size:11.5px;color:var(--dim)">проверяю версию…</div>
@@ -570,6 +571,7 @@ function loadCfg(){
     if(c.router && $('#lnk-router')) $('#lnk-router').href=c.router;
     if(c.zapret && $('#lnk-zapret')) $('#lnk-zapret').href=c.zapret;
     if(c.mihomo && $('#lnk-mihomo')) $('#lnk-mihomo').href=c.mihomo;
+    if(c.contact && $('#lnk-contact')) $('#lnk-contact').href=c.contact;
     if(c.subtitle && $('#site-sub')) $('#site-sub').textContent=c.subtitle;
     if(c.version){
       if($('#ver')) $('#ver').textContent='v'+c.version;

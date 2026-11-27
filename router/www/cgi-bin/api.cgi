@@ -352,13 +352,14 @@ print(json.dumps(out, ensure_ascii=False))
     [ -n "$MV" ] && PARTS="$PARTS · mihomo $MV"
     [ -n "$ZV" ] && PARTS="$PARTS · zapret $ZV"
     SUB="${SITE_SUBTITLE:-$PARTS}"
+    CONTACT="${CONTACT_URL:-https://github.com/EugeneErmakov/NetRules/issues/new}"
     tg=0; grep -q '^TG_TOKEN=.\+' /opt/etc/mihomo/ui.conf 2>/dev/null && tg=1
     R_URL="${ROUTER_URL:-http://192.168.1.1/}"
     Z_URL="${ZAPRET_URL:-http://192.168.1.1:90/}"
     M_URL="${MIHOMO_UI_URL:-http://mihomo.lan:9090/ui/metacubexd/}"
     printf 'Content-Type: application/json\n\n'
-    printf '{"router":"%s","zapret":"%s","mihomo":"%s","version":"%s","subtitle":"%s","tg":%s}\n' \
-      "$(esc "$R_URL")" "$(esc "$Z_URL")" "$(esc "$M_URL")" "$(esc "$VER")" "$(esc "$SUB")" "$tg"
+    printf '{"router":"%s","zapret":"%s","mihomo":"%s","version":"%s","subtitle":"%s","contact":"%s","tg":%s}\n' \
+      "$(esc "$R_URL")" "$(esc "$Z_URL")" "$(esc "$M_URL")" "$(esc "$VER")" "$(esc "$SUB")" "$(esc "$CONTACT")" "$tg"
     ;;
   myip)
     printf 'Content-Type: application/json\n\n'
