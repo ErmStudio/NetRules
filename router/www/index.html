@@ -275,23 +275,27 @@ button.primary:hover{box-shadow:0 12px 30px rgba(79,140,255,.5)}
 
   <!-- СКОРОСТЬ -->
   <section id="view-speed" class="hidden">
-    <div class="card" style="margin-bottom:14px">
-      <div class="health">
+    <div class="card compact" style="margin-bottom:12px">
+      <div class="health" style="align-items:center">
         <div><div class="big ok" id="hs-alive">—</div><div class="lbl">живых</div></div>
         <div><div class="big bad" id="hs-dead">—</div><div class="lbl">мёртвых</div></div>
         <div><div class="big" id="hs-total">—</div><div class="lbl">всего</div></div>
-        <div style="margin-left:auto;text-align:right"><div class="lbl" id="hs-time">проверка ещё не запускалась</div></div>
+        <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+          <span class="lbl" id="hs-time">проверка ещё не запускалась</span>
+          <button class="primary" style="padding:8px 14px;font-size:12.5px" onclick="fullCheck()">Проверить всё</button>
+          <button style="padding:8px 12px;font-size:12.5px" onclick="reloadSpeedTab()" title="Обновить данные без проверки">Обновить</button>
+        </div>
       </div>
       <div class="dead" id="hs-deadlist"></div>
-      <div class="acts" style="margin-bottom:0">
-        <button class="primary" id="btn-check" onclick="nodeCheck()">Проверить все узлы</button>
-        <button id="btn-speed" onclick="speedTest()">Замерить скорость топ-5</button>
-      </div>
+      <div class="h" id="check-state" style="margin-top:6px;font-size:11.5px;color:var(--dim)"></div>
     </div>
 
     <div class="card">
-      <div class="k" style="margin-bottom:8px">Скорость узлов</div>
-      <div id="speed-list"><div class="srow"><span class="nm">нажми «Замерить скорость топ-5»</span></div></div>
+      <div class="k" style="margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">
+        <span>Узлы: пинг и скорость</span>
+        <span class="h" id="speed-time" style="font-size:11.5px"></span>
+      </div>
+      <div id="speed-list"><div class="srow"><span class="nm">нажми «Проверить всё»</span></div></div>
     </div>
   </section>
 
@@ -625,36 +629,44 @@ function loadHealth(){
     $('#hs-deadlist').textContent=dl.length?('не отвечают: '+dl.slice(0,10).join(', ')):'';
   }).catch(function(){});
 }
-function nodeCheck(){
-  var b=$('#btn-check');b.disabled=true;b.textContent='Проверяю 221 узел…';
-  fetch('/cgi-bin/api.cgi?action=nodecheck',{method:'POST'}).then(function(r){return r.json();}).then(function(d){
-    b.disabled=false;b.textContent='Проверить все узлы';
-    if(!d || d.ok===false || typeof d.alive!=='number'){ toast((d&&d.error)||'проверка не удалась'); return; }
-    loadHealth();
-    toast('живых '+d.alive+' из '+d.total);
-  }).catch(function(){b.disabled=false;b.textContent='Проверить все узлы';toast('ошибка проверки');});
-}
-
 function renderSpeed(d){
   var box=$('#speed-list');
-  if(!d||!d.results||!d.results.length){box.innerHTML='<div class="srow"><span class="nm">нет результатов</span></div>';return;}
-  var html='';
-  d.results.slice().sort(function(a,b){return (b.mbps||0)-(a.mbps||0);}).forEach(function(x){
+  if(!d||!d.results||!d.results.length){
+    box.innerHTML='<div class="srow"><span class="nm">нет результатов — нажми «Проверить всё»</span></div>';
+    $('#speed-time').textContent='';
+    return;
+  }
+  var rows=d.results.slice().sort(function(a,b){return (b.mbps||0)-(a.mbps||0);});
+  var head='<div class="srow" style="background:transparent;color:#7f8fa8;font-size:11px;text-transform:uppercase;letter-spacing:.4px">'
+    +'<span class="nm" style="flex:1">узел</span><span style="width:78px;text-align:right">пинг</span><span style="width:96px;text-align:right">скорость</span></div>';
+  var html=rows.map(function(x){
     var best=(x.node===d.best);
-    html+='<div class="srow'+(best?' best':'')+'"><span class="nm">'+(best?'★ ':'')+(x.country?x.country+' · ':'')+x.node+'</span><span>'+(x.mbps||0)+' Мбит/с'+(x.sec>=99?' · не ответил':'')+'</span></div>';
-  });
-  box.innerHTML=html;
+    var nm=(x.country?x.country+' · ':'')+x.node;
+    return '<div class="srow'+(best?' best':'')+'">'
+      +'<span class="nm" style="flex:1">'+(best?'★ ':'')+nm+'</span>'
+      +'<span style="width:78px;text-align:right;color:#9aa8bf">'+(x.ms||0)+' мс</span>'
+      +'<span style="width:96px;text-align:right">'+(x.mbps||0)+' Мбит/с</span></div>';
+  }).join('');
+  box.innerHTML=head+html;
+  $('#speed-time').textContent=d.time?('замер: '+d.time):'';
 }
+var checkTimer=null;
+function fullCheck(){
+  $('#check-state').textContent='запускаю проверку и замер — это займёт до минуты…';
+  $('#check-state').style.color='var(--dim)';
+  api('action=fullcheck').then(function(d){
+    if(!d||!d.ok){ $('#check-state').textContent='не удалось запустить'; return; }
+    var tries=0;
+    if(checkTimer) clearInterval(checkTimer);
+    checkTimer=setInterval(function(){
+      tries++;
+      loadHealth(); loadSpeed();
+      if(tries>=10){ clearInterval(checkTimer); checkTimer=null; $('#check-state').textContent='готово'; }
+    },5000);
+  }).catch(function(){ $('#check-state').textContent='ошибка запуска'; });
+}
+function reloadSpeedTab(){ loadHealth(); loadSpeed(); }
 function loadSpeed(){api('action=speed_last').then(function(d){if(d&&d.results)renderSpeed(d);}).catch(function(){});}
-function speedTest(){
-  var b=$('#btn-speed');b.disabled=true;b.textContent='Тестирую…';
-  fetch('/cgi-bin/api.cgi?action=speedtest',{method:'POST'}).then(function(r){return r.json();}).then(function(d){
-    b.disabled=false;b.textContent='Замерить скорость топ-5';
-    renderSpeed(d); if(d.best) toast('Закреплён: '+(d.bestcountry||'')+' · '+d.best);
-    setTimeout(refresh,1500);
-  }).catch(function(){b.disabled=false;b.textContent='Замерить скорость топ-5';toast('ошибка');});
-}
-
 function loadRules(){api('action=rules_get').then(function(r){$('#rules').value=r.rules||'';}).catch(function(){$('#rules').value='не удалось прочитать';});}
 function saveRules(){
   var body='rules='+$('#rules').value;

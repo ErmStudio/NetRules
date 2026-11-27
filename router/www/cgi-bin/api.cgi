@@ -473,6 +473,10 @@ print(json.dumps({'rows': rows}, ensure_ascii=False))
     printf 'Content-Type: application/json\n\n{"ok":true}\n'
     ;;
 
+  fullcheck)
+    ( /bin/sh /opt/etc/mihomo/checkall.sh >/dev/null 2>&1; sleep 1; /opt/etc/mihomo/speedtest.sh >/dev/null 2>&1 ) &
+    printf 'Content-Type: application/json\n\n{"ok":true,"started":true}\n'
+    ;;
   nodecheck)
     if [ "$mihomo_up" != "1" ]; then
       printf 'Content-Type: application/json\n\n{"ok":false,"error":"mihomo не запущен"}\n'

@@ -40,24 +40,24 @@ printf '%s\n' "$LIST" | while read -r ms nd; do
   [ -z "$nd" ] && continue
   sel "$nd"; sleep 1
   T=$(t_of); [ -z "$T" ] && T=99
-  echo "$nd $T" >> $TMP
+  echo "$nd $ms $T" >> $TMP
 done
 
 BEST=""
-[ -s $TMP ] && BEST=$(awk 'NR==1 || $2<min {min=$2; b=$1} END {print b}' $TMP)
+[ -s $TMP ] && BEST=$(awk 'NR==1 || $3<min {min=$3; b=$1} END {print b}' $TMP)
 
-# подтверждение: перепроверяем победителя, при явном ухудшении берём второго
+# контрольный повтор победителя: если просел в 2.5+ раза — берём второго
 if [ -n "$BEST" ]; then
   sel "$BEST"; sleep 1
   T2=$(t_of); [ -z "$T2" ] && T2=99
-  T1=$(awk -v n="$BEST" '$1==n{print $2; exit}' $TMP)
-  awk -v a="$T1" -v b="$T2" 'BEGIN{exit !(b > a*2.5)}' && {
-    SECOND=$(sort -k2 -n $TMP | awk 'NR==2{print $1}')
+  T1=$(awk -v n="$BEST" '$1==n{print $3; exit}' $TMP)
+  if awk -v a="$T1" -v b="$T2" 'BEGIN{exit !(b > a*2.5)}'; then
+    SECOND=$(sort -k3 -n $TMP | awk 'NR==2{print $1}')
     if [ -n "$SECOND" ]; then
       echo "$(date '+%F %T') $BEST просел ($T1 → $T2), берём $SECOND" >> $LOG
       BEST=$SECOND
     fi
-  }
+  fi
   sel "$BEST"
 fi
 
@@ -65,11 +65,11 @@ BESTC=""
 [ -n "$BEST" ] && BESTC=$(cc "$BEST")
 
 OUTJSON=""
-while read -r nd t; do
+while read -r nd ms t; do
   [ -z "$nd" ] && continue
   MB=$(awk -v t="$t" -v b="$BYTES" 'BEGIN{ if(t>0) printf "%.1f", (b*8/1000000)/t; else print "0" }')
   C=$(cc "$nd")
-  OUTJSON="$OUTJSON${OUTJSON:+,}{\"node\":\"$nd\",\"country\":\"$C\",\"sec\":$t,\"mbps\":$MB}"
+  OUTJSON="$OUTJSON${OUTJSON:+,}{\"node\":\"$nd\",\"country\":\"$C\",\"ms\":$ms,\"sec\":$t,\"mbps\":$MB}"
 done < $TMP
 rm -f $TMP
 
