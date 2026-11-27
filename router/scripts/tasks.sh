@@ -41,12 +41,19 @@ while true; do
 
   # обновление подписки каждые AUTO_SUB_H часов (по умолчанию 4)
   ASH="${AUTO_SUB_H:-4}"
-  if [ "${AUTO_SUB:-1}" = "1" ] && [ "$ASH" -gt 0 ] && [ $((HN % ASH)) -eq 0 ] && [ "$MN" = "04" ]; then
+  ASUB=0
+  if [ "${AUTO_SUB_M:-0}" -gt 0 ]; then
+    [ $((MN % AUTO_SUB_M)) -eq 0 ] && ASUB=1
+  elif [ "$ASH" -gt 0 ] && [ $((HN % ASH)) -eq 0 ] && [ "$MN" = "04" ]; then
+    ASUB=1
+  fi
+  if [ "${AUTO_SUB:-1}" = "1" ] && [ "$ASUB" = "1" ]; then
     MARK="$D$HN"
     if [ "$MARK" != "$(cat $BASE/.last_sub 2>/dev/null)" ]; then
       echo "$MARK" > $BASE/.last_sub
       echo "$(date '+%F %T') задача: обновление подписки" >> $LOG
       /opt/etc/mihomo/update.sh
+      [ -x /opt/etc/itx/update.sh ] && ( /opt/etc/itx/update.sh >/dev/null 2>&1 & )
     fi
   fi
 

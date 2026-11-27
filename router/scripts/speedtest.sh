@@ -36,13 +36,25 @@ measure() {
   echo "$B|$T"
 }
 
-# кандидаты из обеих подписок: chroma (AUTO) + ITX
+# кандидаты: половина из chroma (AUTO) и половина из ITX
 U="url=http%3A%2F%2Fwww.gstatic.com%2Fgenerate_204&timeout=3000"
 MAP=$(/opt/bin/wget -q -O - --timeout=20 --header="$AUTH" "$API/group/AUTO/delay?$U" 2>/dev/null)
 MAP2=$(/opt/bin/wget -q -O - --timeout=25 --header="$AUTH" "$API/group/ITXFAST/delay?$U" 2>/dev/null)
-LIST=$( { printf '%s' "$MAP"; printf '
-'; printf '%s' "$MAP2"; } | tr ',' '\n' | sed 's/[{}"]//g;s/^ *//;s/ *$//' \
-  | awk -F: 'NF==2 && $2>0 && $2<800 {print $2" "$1}' | sort -n | head -"$CAND")
+HALF=$((CAND / 2)); [ "$HALF" -lt 2 ] && HALF=2
+L1=$(printf '%s' "$MAP" | tr ',' '\n' | sed 's/[{}"]//g;s/^ *//;s/ *$//' | awk -F: 'NF==2 && $2>0 && $2<800 {print $2" "$1}' | sort -n | head -"$HALF")
+L2=$(printf '%s' "$MAP2" | tr ',' '\n' | sed 's/[{}"]//g;s/^ *//;s/ *$//' | awk -F: 'NF==2 && $2>0 && $2<800 {print $2" "$1}' | sort -n | head -"$HALF")
+if [ -z "$L2" ]; then
+  L2=$(/opt/bin/wget -q -O - --timeout=10 --header="$AUTH" "$API/proxies/ITX" 2>/dev/null | /opt/bin/python3 -c "
+import sys, json
+try:
+    d = json.load(sys.stdin)
+except Exception:
+    raise SystemExit
+for n in (d.get('all') or [])[:4]:
+    print('999 ' + n)
+")
+fi
+LIST=$(printf '%s\n%s\n' "$L1" "$L2" | grep -v '^$')
 
 [ -z "$LIST" ] && { echo "$(date '+%F %T') нет данных о задержках" >> $LOG; exit 1; }
 

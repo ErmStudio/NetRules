@@ -8,7 +8,7 @@ STATUS=$SRC/restore-kit-status.txt
 mkdir -p "$DST" || exit 1
 
 # конфиги
-for f in config.yaml template.yaml rules-proxy.yaml rules-itx.yaml rules-ads.yaml sub.url ui.conf ui.conf.example VERSION countries.txt device-names.txt; do
+for f in traffic.csv nodes_health.json config.yaml template.yaml rules-proxy.yaml rules-itx.yaml rules-ads.yaml sub.url ui.conf ui.conf.example VERSION countries.txt device-names.txt; do
   [ -f "$SRC/$f" ] && cp -f "$SRC/$f" "$DST/" 2>/dev/null
 done
 [ -f /opt/etc/nfqws2/nfqws2.conf ] && cp -f /opt/etc/nfqws2/nfqws2.conf "$DST/" 2>/dev/null
