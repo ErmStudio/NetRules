@@ -70,9 +70,9 @@ pre{margin:0;background:#060b14;border:1px solid var(--line);border-radius:12px;
 .speedrow{gap:8px}
 #check-state:empty{display:none}
 .speedrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.speedrow .seg{margin-left:auto}
+.speedrow .seg{margin-left:0}
 @media(max-width:700px){
-  .speedrow .seg{margin-left:0;order:3;width:100%;justify-content:space-between}
+  @media(max-width:700px){.speedrow .seg{order:3;width:100%;justify-content:space-between}}
   .speedrow button.primary{margin-left:auto}
 }
 
@@ -140,9 +140,9 @@ body.light .mini{padding:5px 10px;font-size:11px;border-radius:8px;white-space:n
 .speedrow{gap:8px}
 #check-state:empty{display:none}
 .speedrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.speedrow .seg{margin-left:auto}
+.speedrow .seg{margin-left:0}
 @media(max-width:700px){
-  .speedrow .seg{margin-left:0;order:3;width:100%;justify-content:space-between}
+  @media(max-width:700px){.speedrow .seg{order:3;width:100%;justify-content:space-between}}
   .speedrow button.primary{margin-left:auto}
 }
 
@@ -946,7 +946,11 @@ Array.prototype.forEach.call(document.querySelectorAll('#f-mode button'),functio
     renderDomains();
   });
 });loadCfg();
-refresh(); loadHealth();
+document.addEventListener('click',function(e){
+  var t=e.target;
+  var b=(t&&t.closest)?t.closest('#int-mode button'):null;
+  if(b){ setIntervalMode(b.getAttribute('data-h')); }
+});refresh(); loadHealth();
 setInterval(refresh,5000);
 setInterval(function(){ if(view==='logs') loadLog(); },10000);
 setInterval(function(){ if(view==='speed'){ loadHealth(); loadSpeed(); } },15000);
