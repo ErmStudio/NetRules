@@ -698,7 +698,7 @@ function loadHealth(){
     $('#hs-alive').textContent=d.alive;
     $('#hs-dead').textContent=d.dead;
     $('#hs-total').textContent=d.total;
-    $('#hs-time').textContent=d.time||'—';
+    $('#hs-time').textContent=d.time?('проверка узлов: '+d.time):'—';
     $('#v-health').textContent='живых '+(d.total-d.dead)+' из '+d.total;
 
   }).catch(function(){});
@@ -737,7 +737,7 @@ function setIntervalMode(h){
       +'<span style="width:96px;text-align:right">'+(x.mbps||0)+' Мбит/с</span></div>';
   }).join('');
   box.innerHTML=head+html;
-  $('#speed-time').textContent=d.time?('замер: '+d.time):'';
+  $('#speed-time').textContent=d.time?('замер скорости: '+d.time):'';
 }
 var checkTimer=null;
 function fullCheck(){
