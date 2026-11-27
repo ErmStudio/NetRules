@@ -286,20 +286,18 @@ button.primary:hover{box-shadow:0 12px 30px rgba(79,140,255,.5)}
       </div>
 
       <div class="card compact">
-        <div class="k" style="margin-bottom:10px">Проверка и замер</div>
-        <div class="srow" style="background:transparent">
+        <div class="srow" style="background:transparent;flex-wrap:wrap;gap:10px;margin-bottom:0">
           <span class="nm" id="hs-time">ещё не запускалась</span>
-          <button class="primary" style="padding:8px 14px;font-size:12.5px" onclick="fullCheck()" title="Проверить все узлы и замерить скорость">Замерить</button>
+          <button class="primary" style="padding:7px 13px;font-size:12.5px" onclick="fullCheck()" title="Проверить все узлы и замерить скорость">Замерить</button>
+          <span class="seg" id="int-mode" style="margin-left:auto" title="Период автопроверки">
+            <button data-h="1">1 ч</button>
+            <button data-h="2">2 ч</button>
+            <button data-h="3">3 ч</button>
+            <button data-h="6">6 ч</button>
+            <button data-h="12">12 ч</button>
+          </span>
         </div>
-        <div class="k" style="margin:10px 0 6px">Период автопроверки</div>
-        <div class="seg" id="int-mode" style="align-self:flex-start">
-          <button data-h="1">1 ч</button>
-          <button data-h="2">2 ч</button>
-          <button data-h="3">3 ч</button>
-          <button data-h="6">6 ч</button>
-          <button data-h="12">12 ч</button>
-        </div>
-        <div class="h" id="check-state" style="margin-top:8px;font-size:11.5px;color:var(--dim);white-space:normal"></div>
+        <div class="h" id="check-state" style="margin-top:6px;font-size:11.5px;color:var(--dim);white-space:normal"></div>
       </div>
     </div>
 
