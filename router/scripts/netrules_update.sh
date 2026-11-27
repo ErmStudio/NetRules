@@ -21,10 +21,11 @@ fail() {
 LOCAL=$(cat $BASE/VERSION 2>/dev/null | tr -d '\r\n')
 [ -z "$LOCAL" ] && LOCAL="0.0.0"
 
-REMOTE=$(/opt/bin/curl -s --max-time 20 "https://raw.githubusercontent.com/$REPO/$BRANCH/VERSION" 2>/dev/null | tr -d '\r\n ')
+REMOTE=$(/opt/bin/curl -s --max-time 20 "https://raw.githubusercontent.com/$REPO/$BRANCH/VERSION?t=$(date +%s)" 2>/dev/null | tr -d '\r\n ')
 [ -z "$REMOTE" ] && fail "нет связи с GitHub"
 
-if [ "$LOCAL" = "$REMOTE" ] && [ "$1" != "force" ]; then
+NEWER=$(printf '%s\n%s\n' "$LOCAL" "$REMOTE" | sort -V | tail -1)
+if [ "$NEWER" != "$REMOTE" ] || { [ "$LOCAL" = "$REMOTE" ] && [ "$1" != "force" ]; }; then
   printf '{"ok":true,"uptodate":true,"local":"%s","remote":"%s"}\n' "$LOCAL" "$REMOTE" > $RES
   say "уже последняя версия $LOCAL"
   exit 0

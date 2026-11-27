@@ -325,6 +325,18 @@ button.primary:hover{box-shadow:0 12px 30px rgba(79,140,255,.5)}
     </div>
   </section>
 
+    <div class="card" style="margin-top:14px">
+      <div class="k" style="margin-bottom:8px">Обновление NetRules</div>
+      <div class="srow"><span class="nm" id="upd-state">проверяю версию…</span><button onclick="checkVersion(true)" style="padding:6px 12px;font-size:12px">Проверить</button></div>
+      <div class="acts" style="margin:10px 0 0"><button class="primary" id="btn-update" style="display:none" onclick="doUpdate()">Обновить</button></div>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <div class="k" style="margin-bottom:8px">О проекте</div>
+      <div class="srow"><span class="nm">NetRules — открытый проект под MIT</span><a href="https://github.com/EugeneErmakov/NetRules" target="_blank" rel="noopener" style="text-decoration:none"><button class="mini">⭐ GitHub</button></a></div>
+      <div class="h" style="margin-top:8px;white-space:normal">Понравилось? Поставьте звезду на GitHub — лучшая благодарность автору.</div>
+    </div>
+
   <!-- МОДАЛКА ПРАВИЛА -->
   <div id="rule-modal" style="display:none;position:fixed;inset:0;background:rgba(4,8,16,.72);z-index:20;place-items:center">
     <div class="card" style="max-width:440px;width:92%;padding:22px">
@@ -751,7 +763,32 @@ function loadTgState(){
     $('#tg-state').textContent=s&&s.tg?'подключён':'не настроен';
   }).catch(function(){});
 }
-function loadService(){ loadBackups(); loadTrafficDaily(); loadTgState(); }
+var verLocal='', verRemote='';
+function checkVersion(manual){
+  if(manual) $('#upd-state').textContent='проверяю…';
+  api('action=version').then(function(d){
+    if(!d||!d.ok){ $('#upd-state').textContent='не удалось проверить: '+((d&&d.error)||'нет связи'); return; }
+    verLocal=d.local; verRemote=d.remote;
+    if(d.update){
+      $('#upd-state').textContent='доступна версия '+d.remote+' (у вас '+d.local+')';
+      $('#btn-update').style.display='';
+    } else {
+      $('#upd-state').textContent='актуальная версия '+d.local;
+      $('#btn-update').style.display='none';
+    }
+  }).catch(function(){ $('#upd-state').textContent='нет связи с GitHub'; });
+}
+function doUpdate(){
+  if(!window.confirm('Обновить NetRules до '+verRemote+'? Текущие файлы сохранятся в бэкап.')) return;
+  $('#btn-update').disabled=true;
+  $('#upd-state').textContent='скачиваю и устанавливаю…';
+  fetch('/cgi-bin/api.cgi?action=self_update',{method:'POST'}).then(function(r){return r.json();}).then(function(d){
+    if(d&&d.ok&&d.uptodate){ $('#upd-state').textContent='уже последняя версия'; $('#btn-update').style.display='none'; return; }
+    if(d&&d.ok){ toast('Обновлено до '+d.remote+', перезагружаю…'); setTimeout(function(){location.reload();},4000); }
+    else { $('#upd-state').textContent='ошибка: '+((d&&d.error)||'не удалось'); $('#btn-update').disabled=false; }
+  }).catch(function(){ $('#upd-state').textContent='ошибка обновления'; $('#btn-update').disabled=false; });
+}
+function loadService(){ loadBackups(); loadTrafficDaily(); loadTgState(); checkVersion(false); }
 function loadHistory(){
   api('action=history').then(function(d){
     var c=$('#delaychart'); if(!c||!c.getContext) return;

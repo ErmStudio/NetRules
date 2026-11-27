@@ -301,6 +301,45 @@ print(json.dumps(out, ensure_ascii=False))
     printf 'Content-Type: application/json\n\n{"ok":true,"code":"%s","sec":"%s"}\n' "$CODE" "$SEC"
     ;;
 
+  version)
+    LOCAL=$(cat /opt/etc/mihomo/VERSION 2>/dev/null | tr -d '\r\n')
+    [ -z "$LOCAL" ] && LOCAL="0.0.0"
+    REMOTE=$(/opt/bin/curl -s --max-time 20 "https://raw.githubusercontent.com/EugeneErmakov/NetRules/main/VERSION" 2>/dev/null | tr -d '\r\n ')
+    if [ -z "$REMOTE" ]; then
+      printf 'Content-Type: application/json\n\n{"ok":false,"local":"%s","error":"нет связи с GitHub"}\n' "$LOCAL"
+      exit 0
+    fi
+    if [ "$LOCAL" = "$REMOTE" ]; then
+      UPD=false
+    else
+      NEW=$(printf '%s\n%s\n' "$LOCAL" "$REMOTE" | sort -V | tail -1)
+      if [ "$NEW" = "$REMOTE" ]; then UPD=true; else UPD=false; fi
+    fi
+    printf 'Content-Type: application/json\n\n{"ok":true,"local":"%s","remote":"%s","update":%s}\n' "$LOCAL" "$REMOTE" "$UPD"
+    ;;
+
+  self_update)
+    printf 'Content-Type: application/json\n\n'
+    if [ -f /tmp/netrules-updating ]; then
+      printf '{"ok":false,"error":"обновление уже идёт"}\n'
+      exit 0
+    fi
+    touch /tmp/netrules-updating
+    /bin/sh /opt/etc/mihomo/netrules_update.sh >/dev/null 2>&1
+    RC=$?
+    rm -f /tmp/netrules-updating
+    if [ -f /opt/etc/mihomo/update_result.json ]; then
+      cat /opt/etc/mihomo/update_result.json
+    else
+      printf '{"ok":false,"error":"нет результата (код %s)"}\n' "$RC"
+    fi
+    ;;
+
+  update_log)
+    printf 'Content-Type: application/json\n\n'
+    printf '{"log":%s}\n' "$(jstr "$(tail -n 40 /opt/var/log/netrules-update.log 2>/dev/null)")"
+    ;;
+
   config)
     VER=$(cat /opt/etc/mihomo/VERSION 2>/dev/null || echo "1.0.0")
     tg=0; grep -q '^TG_TOKEN=.\+' /opt/etc/mihomo/ui.conf 2>/dev/null && tg=1
