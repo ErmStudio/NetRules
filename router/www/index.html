@@ -383,7 +383,7 @@ button.primary:hover{box-shadow:0 12px 30px rgba(79,140,255,.5)}
   </section>
 </div>
 
-<footer>Сделано в <b>Ermstudio</b> · NetRules <span id="ver"></span> для Keenetic · <span style="opacity:.75">1–6 — вкладки, R — обновить</span></footer>
+<footer>Сделано в <b>Ermstudio</b> · NetRules <span id="ver"></span> для Keenetic · <span style="opacity:.75">1–6 — вкладки, R — обновить, V — видео</span></footer>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -425,6 +425,7 @@ document.addEventListener('keydown',function(e){
   if(e.key>='1'&&e.key<='6'){ show(views[+e.key-1]); window.scrollTo({top:0,behavior:'smooth'}); }
   if(e.key==='r'||e.key==='R'||e.key==='к'||e.key==='К'){ refresh(); toast('Обновлено'); }
   if(e.key==='Escape'){ closeRule(); }
+  if(e.key==='v'||e.key==='V'||e.key==='м'||e.key==='М'){ toggleVideoHotkey(); }
 });
 var view='overview';
 var lockUntil=0;
@@ -775,7 +776,16 @@ function loadTgState(){
   }).catch(function(){});
 }
 var verLocal='', verRemote='';
-function checkVersion(manual){
+function toggleVideoHotkey(){
+  var cb=$('#t-video'); if(!cb) return;
+  var want=cb.checked?0:1;
+  lockUntil=Date.now()+8000;
+  fetch('/cgi-bin/api.cgi?action=toggle_video&on='+want,{method:'POST'}).then(function(){
+    cb.checked=!!want;
+    toast(want?'Видео через прокси включено':'Видео напрямую (zapret)');
+    setTimeout(refresh,1200);
+  }).catch(function(){ toast('ошибка'); });
+}function checkVersion(manual){
   if(manual) $('#upd-state').textContent='проверяю…';
   api('action=version').then(function(d){
     if(!d||!d.ok){ $('#upd-state').textContent='не удалось проверить: '+((d&&d.error)||'нет связи'); return; }
