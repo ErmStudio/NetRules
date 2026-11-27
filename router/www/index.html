@@ -364,7 +364,7 @@ button.primary:hover{box-shadow:0 12px 30px rgba(79,140,255,.5)}
   </section>
 </div>
 
-<footer>Сделано в <b>Ermstudio</b> · NetRules для Keenetic · <span style="opacity:.75">1–6 — вкладки, R — обновить</span></footer>
+<footer>Сделано в <b>Ermstudio</b> · NetRules <span id="ver"></span> для Keenetic · <span style="opacity:.75">1–6 — вкладки, R — обновить</span></footer>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -550,6 +550,7 @@ function loadCfg(){
     if(c.router && $('#lnk-router')) $('#lnk-router').href=c.router;
     if(c.zapret && $('#lnk-zapret')) $('#lnk-zapret').href=c.zapret;
     if(c.mihomo && $('#lnk-mihomo')) $('#lnk-mihomo').href=c.mihomo;
+    if(c.version && $('#ver')) $('#ver').textContent='v'+c.version;
   }).catch(function(){});
 }
 function refresh(){
