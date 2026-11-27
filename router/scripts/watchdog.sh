@@ -71,6 +71,7 @@ while true; do
         if [ "$pinfails" -ge 2 ]; then
           set_auto
           say "переключил на авто-выбор (AUTO)"
+          ( sleep 45; /opt/etc/mihomo/fullcheck.sh >/dev/null 2>&1 ) &
           /bin/sh /opt/etc/mihomo/notify.sh "NetRules: узел $N не отвечает, вернул авто-выбор" >/dev/null 2>&1 &
           pinfails=0
         fi
@@ -84,6 +85,8 @@ while true; do
       set_auto
       soft=1
       say "мягкое лечение: переключил на авто-выбор без перезапуска"
+      say "через минуту перепроверю скорость и закреплю быстрый узел"
+      ( sleep 60; /opt/etc/mihomo/fullcheck.sh >/dev/null 2>&1 ) &
       /bin/sh /opt/etc/mihomo/notify.sh "NetRules: прокси не отвечает, переключил на авто-выбор" >/dev/null 2>&1 &
       sleep 20
       continue
