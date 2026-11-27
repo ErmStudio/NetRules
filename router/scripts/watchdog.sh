@@ -23,6 +23,14 @@ soft=0
 window=$(date +%s)
 
 say() { echo "$(date '+%F %T') $1" >> $LOG; }
+notified_at=0
+notify_once() {
+  now=$(date +%s)
+  if [ $((now - notified_at)) -ge 1800 ]; then
+    notified_at=$now
+    /bin/sh /opt/etc/mihomo/notify.sh "$1" >/dev/null 2>&1 &
+  fi
+}
 
 probe() {
   C=$(/opt/bin/curl -s -o /dev/null -w "%{http_code}" --max-time 8 \
@@ -38,6 +46,7 @@ set_auto() {
   if [ -f /opt/var/run/itx.pid ] && kill -0 "$(cat /opt/var/run/itx.pid 2>/dev/null)" 2>/dev/null; then
     set_proxy "ITX"
     say "основная подписка не отвечает — переключил на ITX"
+    notify_once "NetRules: основная подписка не отвечает, переключил на ITX"
   else
     set_proxy "AUTO"
   fi
@@ -66,25 +75,8 @@ while true; do
     [ "$fails" -gt 0 ] && say "прокси снова отвечает"
     fails=0; soft=0
 
-    # если узел закреплён вручную — проверяем именно его
-    N=$(now_node)
-    if [ -n "$N" ] && [ "$N" != "AUTO" ]; then
-      D=$(/opt/bin/curl -s --max-time 6 -H "$AUTH" \
-          "$API/proxies/$N/delay?url=http%3A%2F%2Fwww.gstatic.com%2Fgenerate_204&timeout=5000" 2>/dev/null)
-      if echo "$D" | grep -q '"delay"'; then
-        pinfails=0
-      else
-        pinfails=$((pinfails+1))
-        say "закреплённый узел $N не отвечает ($pinfails из 2)"
-        if [ "$pinfails" -ge 2 ]; then
-          set_auto
-          say "переключил на авто-выбор (AUTO)"
-          ( sleep 45; /opt/etc/mihomo/fullcheck.sh >/dev/null 2>&1 ) &
-          /bin/sh /opt/etc/mihomo/notify.sh "NetRules: узел $N не отвечает, вернул авто-выбор" >/dev/null 2>&1 &
-          pinfails=0
-        fi
-      fi
-    fi
+    # Закреплённый узел отдельно не дёргаем: если пробa через прокси прошла,
+    # значит трафик идёт и переключать нечего.
   else
     fails=$((fails+1))
     say "прокси не отвечает ($fails из 6)"
@@ -93,6 +85,7 @@ while true; do
       set_auto
       soft=1
       say "мягкое лечение: переключил на авто-выбор без перезапуска"
+      notify_once "NetRules: прокси не отвечает, переключил на авто-выбор"
       say "через минуту перепроверю скорость и закреплю быстрый узел"
       ( sleep 60; /opt/etc/mihomo/fullcheck.sh >/dev/null 2>&1 ) &
       /bin/sh /opt/etc/mihomo/notify.sh "NetRules: прокси не отвечает, переключил на авто-выбор" >/dev/null 2>&1 &
