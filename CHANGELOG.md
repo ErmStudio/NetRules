@@ -1,5 +1,12 @@
 # История изменений
 
+## 1.8.6 — 2026-11-27
+
+### Исправления
+- **Telegram API через chromavpn не работал**: в правилах были только `IP-CIDR` с `no-resolve` — они матчатся для «голых» IP (приложение), но не для доменных запросов (`api.telegram.org`), которые уходили в `MATCH,DIRECT` и блокировались. Добавлены доменные правила: `telegram.org`, `telegram.me`, `t.me`, `telegra.ph`, `telesco.pe`, `tdesktop.com`, `cdn-telegram.org`, `graph.org`, `telegram.dog`.
+- Проверено: `api.telegram.org` через основной прокси — HTTP 200.
+- `notify.sh` снова пробует сначала основной прокси (chromavpn), затем ITX, затем напрямую.
+
 ## 1.8.5 — 2026-11-27
 
 ### Исправления

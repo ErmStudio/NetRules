@@ -15,12 +15,12 @@ send() {
   grep -q '"ok":true' /tmp/tg.out 2>/dev/null
 }
 
-# 1) через локальный SOCKS узла ITX (если запущен Xray)
+# 1) через основной прокси mihomo (chromavpn)
+send --proxy http://127.0.0.1:7890 && exit 0
+# 2) через локальный SOCKS узла ITX (если Xray запущен)
 if [ -f /opt/var/run/itx.pid ] && kill -0 "$(cat /opt/var/run/itx.pid 2>/dev/null)" 2>/dev/null; then
   send --socks5-hostname 127.0.0.1:21101 && exit 0
 fi
-# 2) через основной прокси mihomo
-send --proxy http://127.0.0.1:7890 && exit 0
 # 3) напрямую (последняя попытка)
 send && exit 0
 exit 1

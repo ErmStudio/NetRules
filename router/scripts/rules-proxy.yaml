@@ -59,6 +59,17 @@ payload:
   # Видео Google (YouTube + Google Photos). Включается кнопкой в панели.
   # === VIDEO-END ===
 
+
+  # домены Telegram (IP-правила не матчатся для доменных запросов)
+  - DOMAIN-SUFFIX,telegram.org
+  - DOMAIN-SUFFIX,telegram.me
+  - DOMAIN-SUFFIX,telegram.dog
+  - DOMAIN-SUFFIX,t.me
+  - DOMAIN-SUFFIX,telegra.ph
+  - DOMAIN-SUFFIX,telesco.pe
+  - DOMAIN-SUFFIX,tdesktop.com
+  - DOMAIN-SUFFIX,cdn-telegram.org
+  - DOMAIN-SUFFIX,graph.org
   # ================= TELEGRAM (по подсетям) =================
   - IP-CIDR,91.108.0.0/16,no-resolve
   - IP-CIDR,149.154.160.0/20,no-resolve
