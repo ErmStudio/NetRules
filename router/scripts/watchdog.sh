@@ -58,6 +58,13 @@ while true; do
     else
       fails=$((fails+1))
       echo "$(date '+%F %T') проверка прокси не прошла ($fails из 5)" >> $LOG
+      # сначала пробуем мягко: переключить группу на авто-выбор
+      if [ "$fails" -eq 2 ]; then
+        /opt/bin/curl -s -o /dev/null --max-time 8 -X PUT -H "$AUTH" -H "Content-Type: application/json" \
+          -d '{"name":"AUTO"}' http://127.0.0.1:9090/proxies/PROXY 2>/dev/null
+        echo "$(date '+%F %T') переключил на авто-выбор (AUTO) без перезапуска" >> $LOG
+        /bin/sh /opt/etc/mihomo/notify.sh "NetRules: прокси не отвечает, переключил на авто-выбор" >/dev/null 2>&1 &
+      fi
       if [ "$fails" -ge 5 ]; then
         now=$(date +%s)
         if [ $((now - window)) -gt 3600 ]; then restarts=0; window=$now; fi
