@@ -27,6 +27,7 @@ social_on=0; grep -q 'DOMAIN-SUFFIX,instagram.com' "$RULES" 2>/dev/null && socia
 itx_up=0; [ -f /opt/var/run/itx.pid ] && kill -0 "$(cat /opt/var/run/itx.pid 2>/dev/null)" 2>/dev/null && itx_up=1
 google_itx=0; grep -q "gemini.google.com" /opt/etc/mihomo/rules-itx.yaml 2>/dev/null && google_itx=1
 autosub=0; . /opt/etc/mihomo/ui.conf 2>/dev/null; [ "${AUTO_SUB:-1}" = "1" ] && autosub=1
+autosub_h="${AUTO_SUB_H:-4}"
 tg_notify=0; . /opt/etc/mihomo/ui.conf 2>/dev/null; [ "${TG_NOTIFY:-1}" = "1" ] && tg_notify=1
 zapret_up=0; ps 2>/dev/null | grep -q '[n]fqws2' && zapret_up=1
 nodes=$(grep -c '^    server: ' "$CFG" 2>/dev/null); [ -z "$nodes" ] && nodes=0
@@ -86,11 +87,11 @@ case "$act" in
     TZ0=$(cat /sys/class/thermal/thermal_zone0/temp 2>/dev/null)
     cpu_pct=0
     if [ -r /proc/stat ]; then
-      CUR=$(awk '/^cpu /{t=$2+$3+$4; i=$5; print t" "i}' /proc/stat)
+      CUR=$(awk '/^cpu /{b=$2+$3+$4+$7+$8+$9; i=$5+$6; print b" "i}' /proc/stat)
       PREV=$(cat /tmp/mh-cpu.prev 2>/dev/null)
       echo "$CUR" > /tmp/mh-cpu.prev
       if [ -n "$PREV" ]; then
-        cpu_pct=$(echo "$PREV $CUR" | awk '{dt=$3-$1; di=$4-$2; s=dt+di; if(s>0) printf "%d", dt*100/s; else print 0}')
+        cpu_pct=$(echo "$PREV $CUR" | awk '{db=$3-$1; di=$4-$2; s=db+di; if(s>0) printf "%d", db*100/s; else print 0}')
       fi
     fi
     temp=0
@@ -106,8 +107,8 @@ case "$act" in
     [ -z "$load" ] && load=0
     [ -z "$mihomem" ] && mihomem=0
     tg=0; grep -q '^TG_TOKEN="..' /opt/etc/mihomo/ui.conf 2>/dev/null && tg=1
-    printf '{"mihomo":%s,"vpn":%s,"video":%s,"social":%s,"zapret":%s,"itx":%s,"google_itx":%s,"tg":%s,"tg_notify":%s,"autosub":%s,"nodes":%s,"last":"%s","uptime":%s,"memtotal":%s,"memavail":%s,"node":"%s","country":"%s","delay":"%s","mup":%s,"load":"%s","temp":%s,"cpu":%s,"mihomem":%s,"dl":%s,"ul":%s}\n' \
-      "$mihomo_up" "$vpn_on" "$video_on" "$social_on" "$zapret_up" "$itx_up" "$google_itx" "$tg" "$tg_notify" "$autosub" "$nodes" "$(esc "$lu")" "$up" "$memtot" "$memav" \
+    printf '{"mihomo":%s,"vpn":%s,"video":%s,"social":%s,"zapret":%s,"itx":%s,"google_itx":%s,"tg":%s,"tg_notify":%s,"autosub":%s,"autosub_h":"%s","nodes":%s,"last":"%s","uptime":%s,"memtotal":%s,"memavail":%s,"node":"%s","country":"%s","delay":"%s","mup":%s,"load":"%s","temp":%s,"cpu":%s,"mihomem":%s,"dl":%s,"ul":%s}\n' \
+      "$mihomo_up" "$vpn_on" "$video_on" "$social_on" "$zapret_up" "$itx_up" "$google_itx" "$tg" "$tg_notify" "$autosub" "$(esc "$autosub_h")" "$nodes" "$(esc "$lu")" "$up" "$memtot" "$memav" \
       "$(esc "$node")" "$(esc "$country")" "$(esc "$delay")" "$mup" "$(esc "$load")" "$temp" "$cpu_pct" "$mihomem" "$dl" "$ul"
     ;;
 
@@ -477,6 +478,23 @@ print(json.dumps({'now': d.get('now') or '', 'all': d.get('all') or []}, ensure_
       printf '\nAUTO_SUB="0"\n' >> "$CONF"
     fi
     printf 'Content-Type: application/json\n\n{"ok":true,"autosub":0}\n'
+    ;;
+
+  set_autosub)
+    h=$(printf '%s' "$q" | sed -n 's/.*hours=\([0-9]*\).*/\1/p')
+    case "$h" in 1|2|3|4|6|8|12|24) ;; *) h=4 ;; esac
+    CONF=/opt/etc/mihomo/ui.conf
+    touch "$CONF"
+    if grep -q '^AUTO_SUB_H=' "$CONF" 2>/dev/null; then
+      sed -i "s|^AUTO_SUB_H=.*|AUTO_SUB_H=\"$h\"|" "$CONF"
+    else
+      printf '\nAUTO_SUB_H="%s"\n' "$h" >> "$CONF"
+    fi
+    ( sleep 1
+      kill "$(cat /opt/var/run/mihomo-tasks.pid 2>/dev/null)" 2>/dev/null
+      rm -f /opt/var/run/mihomo-tasks.pid
+      /opt/etc/init.d/S97mihomo-autoupdate start >/dev/null 2>&1 ) >/dev/null 2>&1 &
+    printf 'Content-Type: application/json\n\n{"ok":true,"hours":%s}\n' "$h"
     ;;
 
   config)

@@ -322,7 +322,22 @@ button.primary:hover{box-shadow:0 12px 30px rgba(79,140,255,.5)}
         <div class="h" id="itx-cur" style="margin-top:6px;font-size:11.5px;color:var(--dim)"></div>
       </div>
 
-            <div class="card tog">
+      
+      <div class="card wide" style="padding:12px 14px">
+        <div class="k" style="margin-bottom:8px">Период обновления подписки</div>
+        <div class="rowline">
+          <span class="seg" id="sub-mode">
+            <button data-h="1">1 ч</button>
+            <button data-h="2">2 ч</button>
+            <button data-h="4">4 ч</button>
+            <button data-h="6">6 ч</button>
+            <button data-h="12">12 ч</button>
+          </span>
+          <span class="h" id="sub-cur" style="margin-left:auto;font-size:11.5px;color:var(--dim)"></span>
+        </div>
+      </div>
+
+      <div class="card tog">
         <div><h3>Прокси</h3><p>Telegram, ChatGPT и остальные заблокированные — через прокси</p></div>
         <label class="sw"><input type="checkbox" id="t-vpn"><span class="sl"></span></label>
       </div>      <div class="card tog">
@@ -730,6 +745,7 @@ function refresh(){
     if($('#t-google')) $('#t-google').checked=!!s.google_itx;
     if($('#t-tg')) $('#t-tg').checked=!!s.tg_notify;
     if($('#t-autosub')) $('#t-autosub').checked=!!s.autosub;
+    if(s.autosub_h){ markSub(s.autosub_h); var sc=$('#sub-cur'); if(sc) sc.textContent='сейчас: каждые '+s.autosub_h+' ч'; }
   }).catch(function(){});
 }
 
@@ -852,6 +868,22 @@ function pickItx(){
     if(c) c.textContent='сейчас: '+v;
   }).catch(function(){ toast('ошибка'); });
 }
+function markSub(h){
+  Array.prototype.forEach.call(document.querySelectorAll('#sub-mode button'),function(b){
+    b.classList.toggle('active', b.getAttribute('data-h')===String(h));
+  });
+}
+function setSubMode(h){
+  api('action=set_autosub&hours='+h).then(function(d){
+    if(d&&d.ok){ markSub(d.hours); toast('Подписка обновляется каждые '+d.hours+' ч'); }
+    else toast('не удалось');
+  }).catch(function(){ toast('ошибка'); });
+}
+document.addEventListener('click',function(e){
+  var t=e.target;
+  var b=(t&&t.closest)?t.closest('#sub-mode button'):null;
+  if(b) setSubMode(b.getAttribute('data-h'));
+});
 function bindPair(id,onAct,offAct,onTxt,offTxt){
   var el=$(id); if(!el) return;
   el.addEventListener('change',function(e){
