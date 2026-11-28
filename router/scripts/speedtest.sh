@@ -4,6 +4,9 @@
 # Настройки (необязательно) в /opt/etc/mihomo/ui.conf:
 #   SPEEDTEST_CANDIDATES=10   сколько лучших по пингу проверять
 #   SPEEDTEST_CAP=3000000     максимум байт на один замер
+# ВАЖНО: имена узлов ITX содержат пробелы («ITX-16 DE 214ms»), поэтому вся
+# промежуточная таблица разделена символом "|" — иначе поле ms съезжает,
+# получается битый JSON и панель показывает пустой список.
 PATH=/opt/bin:/opt/sbin:/bin:/sbin:/usr/bin:/usr/sbin
 export PATH
 [ -f /opt/etc/mihomo/ui.conf ] && . /opt/etc/mihomo/ui.conf
@@ -17,6 +20,7 @@ OUT=/opt/etc/mihomo/speedtest.json
 CT=/opt/etc/mihomo/countries.txt
 LOG=/opt/var/log/mihomo-speedtest.log
 TMP=/tmp/mh-speed.txt
+RANK=/tmp/mh-speed.rank
 
 sel() {
   /opt/bin/curl -s -o /dev/null --max-time 8 -X PUT \
@@ -24,6 +28,12 @@ sel() {
     -d "{\"name\":\"$1\"}" "$API/proxies/TEST" 2>/dev/null
 }
 cc() { awk -F'|' -v n="$1" '$1==n{print $2; exit}' $CT 2>/dev/null; }
+# для узлов ITX подписи в countries.txt нет — берём код из имени («ITX-28 NL 269ms» -> NL)
+ccname() {
+  C=$(cc "$1")
+  [ -z "$C" ] && case "$1" in ITX-*) C=$(printf '%s' "$1" | awk '{print $2}') ;; esac
+  echo "$C"
+}
 
 # печатает "байты|секунды" — сколько успели принять за ~1.2 с
 measure() {
@@ -63,7 +73,7 @@ printf '%s\n' "$LIST" | while read -r ms nd; do
   [ -z "$nd" ] && continue
   sel "$nd"; sleep 1
   M=$(measure); B=${M%|*}; T=${M#*|}
-  echo "$nd $ms $B $T" >> $TMP
+  printf '%s|%s|%s|%s\n' "$nd" "$ms" "$B" "$T" >> $TMP
 done
 
 BEST=""
@@ -71,9 +81,11 @@ BEST=""
 # (или просел более чем в 2.5 раза), не закрепляем: именно такие «быстрые, но
 # рваные» узлы давали висящий Telegram. Пробуем до трёх кандидатов.
 if [ -s $TMP ]; then
-  awk 'NF==4 && $4>0 {r=$3/$4; print r, $1}' $TMP | sort -rn | sed 's/^[^ ]* //' > $TMP.rank
+  # %.0f обязателен: awk печатает большие числа как 7.58e+06, а sort -n
+  # понимает только обычную запись и ставит их в конец (быстрые узлы уезжали вниз)
+  awk -F'|' 'NF==4 && $4>0 {printf "%.0f|%s\n", $3/$4, $1}' $TMP | sort -rn | cut -d'|' -f2- > $RANK
   TRIES=0
-  while read -r nd; do
+  while IFS='|' read -r nd; do
     [ -z "$nd" ] && continue
     [ "$TRIES" -ge 3 ] && break
     TRIES=$((TRIES + 1))
@@ -83,7 +95,7 @@ if [ -s $TMP ]; then
       echo "$(date '+%F %T') $nd не прошёл контрольный прогон (0 байт), берём следующего" >> $LOG
       continue
     fi
-    R1=$(awk -v n="$nd" '$1==n && $4>0 {print $3/$4}' $TMP | head -1)
+    R1=$(awk -F'|' -v n="$nd" '$1==n && $4>0 {print $3/$4}' $TMP | head -1)
     R2=$(awk -v b="$B2" -v t="$T2" 'BEGIN{printf "%.2f", b/t}')
     SLOW=$(awk -v a="$R1" -v b="$R2" 'BEGIN{print (a>0 && b < a/2.5) ? 1 : 0}')
     if [ "$SLOW" = "1" ] && [ "$TRIES" -lt 3 ]; then
@@ -92,12 +104,12 @@ if [ -s $TMP ]; then
     fi
     BEST=$nd
     break
-  done < $TMP.rank
-  rm -f $TMP.rank
+  done < $RANK
+  rm -f $RANK
 fi
 
 BESTC=""
-[ -n "$BEST" ] && BESTC=$(cc "$BEST")
+[ -n "$BEST" ] && BESTC=$(ccname "$BEST")
 [ -n "$BEST" ] && sel "$BEST"
 
 # Закрепляем лучший узел в рабочей группе (одно переключение за прогон)
@@ -106,10 +118,10 @@ BESTC=""
   -d "{\"name\":\"$BEST\"}" "$API/proxies/PROXY" 2>/dev/null
 
 OUTJSON=""
-while read -r nd ms b t; do
+while IFS='|' read -r nd ms b t; do
   [ -z "$nd" ] && continue
   MB=$(awk -v b="$b" -v t="$t" 'BEGIN{ if(t>0) printf "%.1f", (b*8/1000000)/t; else print "0" }')
-  C=$(cc "$nd")
+  C=$(ccname "$nd")
   SRC=chroma
   case "$nd" in ITX-*) SRC=itx ;; esac
   OUTJSON="$OUTJSON${OUTJSON:+,}{\"node\":\"$nd\",\"country\":\"$C\",\"ms\":$ms,\"mbps\":$MB,\"src\":\"$SRC\"}"
