@@ -15,7 +15,18 @@ LOCK=/tmp/mh-checking
 TMP=/tmp/mh-nodes.txt
 RES=/tmp/mh-health.txt
 
-touch $LOCK
+# lock с отметкой времени, чтобы убитый прогон не блокировал проверки навсегда
+if [ -f "$LOCK" ]; then
+  TS=$(cat "$LOCK" 2>/dev/null)
+  case "$TS" in ''|*[!0-9]*) TS=0 ;; esac
+  if [ "$TS" -gt 0 ] && [ $(( $(date +%s) - TS )) -lt 1800 ]; then
+    echo "$(date '+%F %T') проверка узлов уже идёт, пропуск" >> $LOG
+    exit 0
+  fi
+  echo "$(date '+%F %T') снят зависший lock проверки" >> $LOG
+  rm -f "$LOCK"
+fi
+date +%s > "$LOCK"
 trap 'rm -f $LOCK' EXIT
 
 i=0

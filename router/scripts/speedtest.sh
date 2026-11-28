@@ -67,26 +67,38 @@ printf '%s\n' "$LIST" | while read -r ms nd; do
 done
 
 BEST=""
-[ -s $TMP ] && BEST=$(awk 'NF==4 && $4>0 {r=$3/$4; if (r>max) {max=r; b=$1}} END {print b}' $TMP)
-
-# контрольный повтор победителя: просадка в 2.5+ раза -> второй по скорости
-if [ -n "$BEST" ]; then
-  sel "$BEST"; sleep 1
-  M2=$(measure); B2=${M2%|*}; T2=${M2#*|}
-  if [ "$B2" -gt 0 ] && [ "$T2" != "0" ]; then
-    R1=$(awk -v n="$BEST" '$1==n && $4>0 {print $3/$4}' $TMP | head -1)
+# победитель по скорости + контрольный прогон. Узел, который на повторе отдал 0
+# (или просел более чем в 2.5 раза), не закрепляем: именно такие «быстрые, но
+# рваные» узлы давали висящий Telegram. Пробуем до трёх кандидатов.
+if [ -s $TMP ]; then
+  awk 'NF==4 && $4>0 {r=$3/$4; print r, $1}' $TMP | sort -rn | sed 's/^[^ ]* //' > $TMP.rank
+  TRIES=0
+  while read -r nd; do
+    [ -z "$nd" ] && continue
+    [ "$TRIES" -ge 3 ] && break
+    TRIES=$((TRIES + 1))
+    sel "$nd"; sleep 1
+    M2=$(measure); B2=${M2%|*}; T2=${M2#*|}
+    if [ "$B2" -le 0 ] || [ "$T2" = "0" ]; then
+      echo "$(date '+%F %T') $nd не прошёл контрольный прогон (0 байт), берём следующего" >> $LOG
+      continue
+    fi
+    R1=$(awk -v n="$nd" '$1==n && $4>0 {print $3/$4}' $TMP | head -1)
     R2=$(awk -v b="$B2" -v t="$T2" 'BEGIN{printf "%.2f", b/t}')
     SLOW=$(awk -v a="$R1" -v b="$R2" 'BEGIN{print (a>0 && b < a/2.5) ? 1 : 0}')
-    if [ "$SLOW" = "1" ]; then
-      SECOND=$(awk 'NF==4 && $4>0 && $1!="'"$BEST"'" {r=$3/$4; print r, $1}' $TMP | sort -rn | head -1 | awk '{print $2}')
-      [ -n "$SECOND" ] && { echo "$(date '+%F %T') $BEST просел, берём $SECOND" >> $LOG; BEST=$SECOND; }
+    if [ "$SLOW" = "1" ] && [ "$TRIES" -lt 3 ]; then
+      echo "$(date '+%F %T') $nd просел на контрольном, берём следующего" >> $LOG
+      continue
     fi
-  fi
-  sel "$BEST"
+    BEST=$nd
+    break
+  done < $TMP.rank
+  rm -f $TMP.rank
 fi
 
 BESTC=""
 [ -n "$BEST" ] && BESTC=$(cc "$BEST")
+[ -n "$BEST" ] && sel "$BEST"
 
 # Закрепляем лучший узел в рабочей группе (одно переключение за прогон)
 [ -n "$BEST" ] && /opt/bin/curl -s -o /dev/null --max-time 8 -X PUT \

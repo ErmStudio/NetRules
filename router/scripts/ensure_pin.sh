@@ -2,10 +2,10 @@
 # Страховка от «мёртвого закреплённого узла».
 # После горячей перезагрузки конфига mihomo иногда восстанавливает в группе PROXY
 # узел, которого уже нет в подписке или который не отвечает. Тогда весь прокси-трафик
-# (Telegram, ChatGPT, Telegram-звонки) висит до таймаута, пока watchdog не переключит
-# на AUTO через три неудачные пробы — это минуты.
-# Здесь проверка занимает секунды: если выбранный узел помечен как неживой,
-# сразу возвращаем авто-выбор.
+# (Telegram, звонки, чаты) висит до таймаута, пока watchdog не переключит на AUTO
+# через три неудачные пробы — это минуты.
+# Здесь: если последняя проверка узла дала задержку 0, узел перепроверяется активно,
+# и только при повторном отказе возвращается авто-выбор.
 PATH=/opt/bin:/opt/sbin:/bin:/sbin:/usr/bin:/usr/sbin
 export PATH
 [ -f /opt/etc/mihomo/ui.conf ] && . /opt/etc/mihomo/ui.conf
@@ -29,12 +29,28 @@ if not h:
     # это не признак смерти узла, не трогаем
     print("SKIP")
     raise SystemExit
-print("DEAD" if h[-1].get("delay", 0) == 0 else "OK")
+print(("MAYBE|" + n) if h[-1].get("delay", 0) == 0 else "OK")
 ' 2>/dev/null)
 
-[ "$RES" = "DEAD" ] || exit 0
+NODE=""
+case "$RES" in
+  "MAYBE|"*)
+    NODE=${RES#MAYBE|}
+    ENC=$(printf '%s' "$NODE" | sed 's/ /%20/g')
+    D=$(/opt/bin/curl -s --max-time 9 -H "$AUTH" \
+        "$API/proxies/$ENC/delay?url=http%3A%2F%2Fwww.gstatic.com%2Fgenerate_204&timeout=5000" 2>/dev/null)
+    case "$D" in
+      *'"delay"'*)
+        # узел ответил — предыдущий нулевой замер был случайным, не трогаем
+        exit 0 ;;
+    esac
+    ;;
+  *)
+    exit 0 ;;
+esac
+
 /opt/bin/curl -s -o /dev/null --max-time 8 -X PUT -H "$AUTH" \
   -H "Content-Type: application/json" -d '{"name":"AUTO"}' "$API/proxies/PROXY" 2>/dev/null
-echo "$(date '+%F %T') закреплённый узел не отвечает — переключил PROXY на AUTO" >> $LOG
+echo "$(date '+%F %T') узел ${NODE:-?} не отвечает — переключил PROXY на AUTO" >> $LOG
 /bin/sh /opt/etc/mihomo/notify.sh "NetRules: закреплённый узел не отвечает, вернул авто-выбор" >/dev/null 2>&1 &
 exit 0
