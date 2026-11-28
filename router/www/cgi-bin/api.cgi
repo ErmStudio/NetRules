@@ -601,6 +601,17 @@ print(json.dumps({'ok':True,'total':len(rows),'available':len(ok),
     if [ -n "$R" ]; then printf '%s\n' "$R"; else printf '{"error":"сервисы не ответили"}\n'; fi
     ;;
 
+  route_check)
+    # куда уйдёт запрос по правилам (без сетевых запросов), см. route_check.py
+    printf 'Content-Type: application/json\n\n'
+    H=$(printf '%s' "$q" | sed -n 's/.*[&?]host=\([^&]*\).*/\1/p')
+    if [ -n "$H" ]; then
+      /opt/bin/python3 /opt/etc/mihomo/route_check.py "host=$H" 2>/dev/null || printf '{"ok":false}\n'
+    else
+      /opt/bin/python3 /opt/etc/mihomo/route_check.py 2>/dev/null || printf '{"ok":false}\n'
+    fi
+    ;;
+
   add_rule)
     host=$(printf '%s' "$q" | sed -n 's/.*host=\([^&]*\).*/\1/p' | sed 's/%2E/./g;s/%2F/\//g')
     pol=$(printf '%s' "$q" | sed -n 's/.*policy=\([a-z]*\).*/\1/p')

@@ -1,0 +1,115 @@
+mixed-port: 7890
+redir-port: 7892
+allow-lan: true
+bind-address: "*"
+mode: rule
+log-level: warning
+ipv6: false
+external-controller: 0.0.0.0:9090
+secret: "#SECRET#"
+external-ui: ui
+external-ui-name: metacubexd
+unified-delay: true
+tcp-concurrent: true
+
+sniffer:
+  enable: true
+  parse-pure-ip: true
+  override-destination: false
+  sniff:
+    TLS:
+      ports: [443]
+    HTTP:
+      ports: [80, 8080-8880]
+
+proxies:
+#PROXIES#
+
+proxy-providers:
+  itx:
+    type: file
+    path: ./itx-proxies.yaml
+
+listeners:
+  - name: speedtest
+    type: mixed
+    port: 7893
+    listen: 127.0.0.1
+    proxy: TEST
+
+proxy-groups:
+  - name: "AUTO"
+    type: url-test
+    url: http://www.gstatic.com/generate_204
+    interval: 1200
+    tolerance: 50
+    lazy: true
+    proxies: #ALL#
+  - name: "PROXY"
+    type: select
+    proxies:
+      - "AUTO"
+#ALL_PROXY#
+  - name: "ITX"
+    type: select
+    use: ["itx"]
+  - name: "TEST"
+    type: select
+    proxies: #ALL#
+    use: ["itx"]
+  - name: "GEMINI"
+    type: fallback
+    proxies:
+      - "ITX"
+      - "ITXFAST"
+      - "PROXY"
+  - name: "ITXFAST"
+    type: url-test
+    use: ["itx"]
+    url: http://www.gstatic.com/generate_204
+    interval: 600
+    tolerance: 50
+rule-providers:
+  proxy-sites:
+    type: file
+    behavior: classical
+    path: ./rules-proxy.yaml
+    interval: 300
+  itx-rules:
+    type: file
+    behavior: classical
+    path: ./rules-itx.yaml
+    interval: 300
+  ads:
+    type: file
+    behavior: classical
+    path: ./rules-ads.yaml
+    interval: 300
+
+rules:
+  # --- DoH/DNS: всегда DIRECT, никогда через прокси ---
+  - DOMAIN,dns.google,DIRECT
+  - DOMAIN,cloudflare-dns.com,DIRECT
+  - DOMAIN-SUFFIX,cloudflare-dns.com,DIRECT
+  - DOMAIN,one.one.one.one,DIRECT
+  - DOMAIN-SUFFIX,dns.quad9.net,DIRECT
+  - DOMAIN,doh.opendns.com,DIRECT
+  - IP-CIDR,8.8.8.8/32,DIRECT,no-resolve
+  - IP-CIDR,8.8.4.4/32,DIRECT,no-resolve
+  - IP-CIDR,1.1.1.1/32,DIRECT,no-resolve
+  - IP-CIDR,1.0.0.1/32,DIRECT,no-resolve
+  - DOMAIN-SUFFIX,ifconfig.co,PROXY
+  - DOMAIN-SUFFIX,myip.com,PROXY
+  - DOMAIN-SUFFIX,speed.cloudflare.com,PROXY
+  - DOMAIN-SUFFIX,ipinfo.io,PROXY
+  - IP-CIDR,223.6.6.6/32,REJECT,no-resolve
+  - IP-CIDR,223.5.5.5/32,REJECT,no-resolve
+  - DOMAIN-SUFFIX,betweendigital.com,REJECT
+  - DOMAIN-SUFFIX,doubleclick.net,REJECT
+  - DOMAIN-SUFFIX,googleadservices.com,REJECT
+  - DOMAIN-SUFFIX,googlesyndication.com,REJECT
+  - DOMAIN-SUFFIX,google-analytics.com,REJECT
+  - RULE-SET,ads,REJECT
+  - RULE-SET,itx-rules,GEMINI
+  - RULE-SET,proxy-sites,PROXY
+  - MATCH,DIRECT

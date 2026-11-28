@@ -6,6 +6,17 @@ def q(v):
     s = str(v).replace('\\', '\\\\').replace('"', '\\"')
     return '"' + s + '"'
 
+def secret_from_conf():
+    """Секрет API живёт в ui.conf; в шаблоне лежит плейсхолдер #SECRET#."""
+    try:
+        for line in open(os.path.join(BASE, "ui.conf"), encoding="utf-8"):
+            line = line.strip()
+            if line.startswith("MIHOMO_SECRET="):
+                return line.split("=", 1)[1].strip().strip('"').strip("'")
+    except Exception:
+        pass
+    return ""
+
 def load_proxies(path):
     data = json.load(open(path, encoding="utf-8"))
     ob = data[0].get("outbounds", []) if isinstance(data, list) else data.get("outbounds", [])
@@ -19,6 +30,10 @@ def load_proxies(path):
         if net not in ("tcp", "grpc", "ws"):
             continue
         tag = o.get("tag") or "node"
+        # Российские узлы/релеи из подписки не берём: выход из РФ ломает регион
+        # Google/Gemini и может тихо подменить страну для всего прокси-трафика.
+        if re.search(r"(?i)(russia|_relay|-relay)", tag):
+            continue
         rs = ss.get("realitySettings") or {}
         ts = ss.get("tlsSettings") or {}
         sni = rs.get("serverName") or ts.get("serverName")
@@ -148,6 +163,7 @@ def main():
     all_lines = "\n".join("      - " + q(n) for n in names)
     tpl = open(os.path.join(BASE, "template.yaml"), encoding="utf-8").read()
     cfg = tpl.replace("#PROXIES#", emit(px)).replace("#ALL#", all_flow).replace("#ALL_PROXY#", all_lines)
+    cfg = cfg.replace("#SECRET#", secret_from_conf() or "change-me")
     cfg_path = os.path.join(BASE, "config.yaml")
     if os.path.exists(cfg_path):
         os.rename(cfg_path, cfg_path + ".bak")

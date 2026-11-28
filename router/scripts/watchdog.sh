@@ -93,11 +93,21 @@ while true; do
     fi
   fi
 
+  # раз в 10 минут: не остался ли в PROXY мёртвый узел после перезагрузки конфига
+  if [ ! -f /tmp/mh-pincheck ] || [ "$(date +%s)" -ge "$(cat /tmp/mh-pincheck 2>/dev/null || echo 0)" ]; then
+    echo $(( $(date +%s) + 600 )) > /tmp/mh-pincheck
+    /bin/sh /opt/etc/mihomo/ensure_pin.sh
+  fi
+
   # страна выхода: не оставляем узел из RU/BY/KZ (Google считает регион смешанным)
+  # ВАЖНО: мерить только тот адрес, который реально идёт через PROXY (правило ipinfo.io).
+  # Раньше здесь был www.cloudflare.com — он не попадает ни под одно правило,
+  # уходил DIRECT и проба всегда видела IP самого роутера (RU). Из-за этого
+  # каждые 30 минут закреплённый узел выбрасывался и страна выхода менялась.
   if [ ! -f /tmp/mh-geochk ] || [ "$(date +%s)" -ge "$(cat /tmp/mh-geochk 2>/dev/null || echo 0)" ]; then
-    date +%s > /dev/null
     echo $(( $(date +%s) + 1800 )) > /tmp/mh-geochk
-    CC=$(/opt/bin/curl -s --max-time 8 --proxy "http://127.0.0.1:7890" "https://www.cloudflare.com/cdn-cgi/trace" 2>/dev/null | sed -n 's/^loc=//p')
+    CC=$(/opt/bin/curl -s --max-time 8 --proxy "http://127.0.0.1:7890" "https://ipinfo.io/country" 2>/dev/null | tr -d ' \r\n')
+    say "страна выхода туннеля: ${CC:-?}"
     case "$CC" in
       RU|BY|KZ)
         say "страна выхода $CC — переключаю на авто-выбор"

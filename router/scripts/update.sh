@@ -5,6 +5,10 @@ LOG=/opt/var/log/mihomo-update.log
 STATUS=$BASE/last_update.txt
 URL=$(cat $BASE/sub.url 2>/dev/null)
 
+# без этого при ручном запуске (не из S97) MIHOMO_SECRET пустой,
+# перезагрузка конфига молча получает 401 и скрипт рапортует успех
+[ -f $BASE/ui.conf ] && . $BASE/ui.conf
+
 now() { date "+%Y-%m-%d %H:%M"; }
 fail() { echo "FAIL|$(now)|$1" > $STATUS; echo "$(now) FAIL: $1" >> $LOG; exit 1; }
 
@@ -23,6 +27,8 @@ CNT=$(echo "$NODES" | sed 's/.*nodes=//')
   -H "Content-Type: application/json" -d "{\"path\":\"/opt/etc/mihomo/config.yaml\"}" \
   "http://127.0.0.1:9090/configs?force=false" 2>/dev/null
 sleep 2
+# после перезагрузки конфига mihomo может восстановить в PROXY мёртвый узел
+/bin/sh /opt/etc/mihomo/ensure_pin.sh
 if netstat -ltn 2>/dev/null | grep -q ":7892"; then
   echo "OK|$(now)|$CNT" > $STATUS
   echo "=== $(date '+%Y-%m-%d %H:%M:%S') update done, nodes=$CNT ===" >> $LOG

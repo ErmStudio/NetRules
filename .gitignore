@@ -5,7 +5,6 @@ ui.conf
 # сгенерированное на роутере
 config.yaml
 config.yaml.bak
-template.yaml
 sub.url
 sub.json
 countries.txt

@@ -1,7 +1,7 @@
 # NetRules — полная передача проекта
 
 Документ для нового инженера (человека или ИИ). Читать сверху вниз: сначала суть, потом устройство, потом грабли.
-Актуально на **28.11.2026**, версия **2.1.0**.
+Актуально на **28.11.2026**, версия **2.2.0**.
 
 ---
 
@@ -15,7 +15,7 @@
 - **lighttpd** на `:8090` — отдаёт панель и `api.cgi` (docroot `/opt/etc/mihomo/www`).
 - **Xray** (опционально) — для второй подписки на транспорте xhttp.
 
-**Версия проекта:** файл `VERSION` (сейчас `2.1.0`), теги в GitHub `v2.1.0`, `v1.9.x`, `v1.8.x`…
+**Версия проекта:** файл `VERSION` (сейчас `2.2.0`), теги в GitHub `v2.2.0`, `v2.1.x`, `v1.9.x`…
 **Репозиторий:** `git@github.com:ErmStudio/NetRules.git`, ветка `main`. Автор: Eugene Ermakov (Ermstudio), лицензия MIT + NOTICE (атрибуция обязательна).
 
 ---
@@ -44,7 +44,7 @@
   www/index.html          панель (всё в одном файле: HTML+CSS+JS)
   www/cgi-bin/api.cgi     CGI-API (posix sh + python3)
   config.yaml             сгенерированный конфиг mihomo (НЕ править руками — перезапишется)
-  template.yaml           шаблон конфига (правим здесь)
+  template.yaml           шаблон конфига (правим здесь; secret — плейсхолдер #SECRET#)
   rules-proxy.yaml        правила: что гнать через прокси (RULE-SET proxy-sites)
   rules-itx.yaml          правила Gemini → группа GEMINI
   rules-ads.yaml          правила блокировки рекламы (REJECT)
@@ -56,6 +56,8 @@
   fullcheck.sh            проверка живости узлов + замер (обёртка)
   checkall.sh             проверка доступности всех узлов
   watchdog.sh             сторож mihomo: пробы, откаты, самовосстановление правил
+  ensure_pin.sh           возврат на AUTO, если закреплённый узел мёртв после перезагрузки конфига
+  route_check.py          мини-матчер правил: куда уйдёт запрос (без сети)
   tasks.sh                планировщик (заменяет cron)
   backup.sh               ежедневный бэкап в /storage/mihomo-backup/<дата>/
   backup-kit.sh           копия «restore-kit» на внутреннюю флешку /storage
@@ -125,17 +127,18 @@ README.md, CHANGELOG.md, VERSION, LICENSE, NOTICE, CONTRIBUTING.md
 | `AUTO` | url-test | все узлы chroma |
 | `PROXY` | select | рабочий выбор: `AUTO` + узлы chroma + узлы ITX (`use: [itx]`) |
 | `ITX` | select | только узлы второй подписки (SOCKS через Xray) |
-| `GEMINI` | **fallback** | сначала `ITX`, при недоступности → `AUTO` |
+| `GEMINI` | **fallback** | `ITX` → `ITXFAST` → `PROXY`: сначала узел ITX, потом другие узлы ITX, в крайнем случае закреплённый PROXY |
 | `ITXFAST` | url-test | замер задержек узлов ITX |
 | `TEST` | select | песочница для замера скорости (порт 7893) |
 
 ### Правила (порядок важен)
 
 ```
+(в начале rules)  DoH → DIRECT: dns.google, cloudflare-dns.com, one.one.one.one,
+                              dns.quad9.net, doh.opendns.com, 8.8.8.8/8.8.4.4/1.1.1.1/1.0.0.1
 rules-ads.yaml      → REJECT (реклама, трекеры)
-rules-itx.yaml      → GEMINI (Gemini, AI Studio, NotebookLM, DeepMind)
-proxy-sites         → PROXY (openai, claude, photos.google, googlevideo, telegram-домены,
-                              accounts/ogs/apis/consent.google.com, googleapis.com и др.)
+rules-itx.yaml      → GEMINI (вся сессия Gemini: веб, приложение, аккаунт, OneGoogle)
+proxy-sites         → PROXY (openai, claude, photos.google, googlevideo, telegram-домены и др.)
 MATCH               → DIRECT
 ```
 
@@ -174,14 +177,27 @@ Xray читает JSON подписки и поднимает **по одном�
 ## 7. Gemini — самая тонкая часть
 
 ### Почему рвётся
-Google определяет регион по **всем** запросам сессии. Если Gemini-домены идут через узел в PL, а `accounts.google.com` / `ogs.google.com` уходят напрямую с российского IP, получается «смешанный регион» → «Gemini не поддерживается в вашей стране». Виноват не узел ITX, а несовпадение стран.
+Google определяет регион **не по одной странице**, а по совокупности служебных запросов сессии, и все они должны выходить из одной страны. Проверено на живом трафике (перехват `GET /connections` с `metadata.sniffHost`): у Gemini три независимых канала, и если хоть один уходит напрямую с российского IP, получается «смешанный регион».
+
+### Какие хосты реально нужны (замерено, не догадки)
+| Что | Хосты |
+|---|---|
+| веб, страница и история | `gemini.google.com`, `bard.google.com` |
+| **веб, сам запрос и стрим ответа** | `geminiweb-pa.clients6.google.com` (WebChannel) |
+| приложение (текст) | `robinfrontend-pa.googleapis.com` |
+| приложение (realtime) | `pubsub.googleapis.com` |
+| приложение/веб: файлы и AI Studio | `content-push.googleapis.com`, `alkalimakersuite-pa.clients6.google.com` |
+| аккаунт и сессия | `accounts`, `myaccount`, `ogs`, `apis`, `consent`, `scone-pa`, `googleusercontent`, `photoslibrary` |
+
+Симптом «страница открылась, история есть, но отправка падает» = `geminiweb-pa` шёл DIRECT. Симптом «в приложении не поддерживается страна» = `robinfrontend-pa` шёл DIRECT. История чатов при этом грузится, потому что она едет с `gemini.google.com`.
 
 ### Что сделано
-1. Домены аккаунта и согласий (`accounts`, `myaccount`, `ogs`, `apis`, `consent`) — через chroma (Финляндия/PL, разрешённые регионы).
-2. Домены API/приложения (`googleapis.com`, `mtalk`, `fcm`, `play`, `android`, `people`, `gemini.gstatic.com`, `lh3.googleusercontent.com`) — через chroma, чтобы работало мобильное приложение.
-3. QUIC к Google перекрыт (`quic_block.sh`), иначе браузер ходил UDP напрямую с RU-IP.
-4. Группа `GEMINI` = fallback: ITX → AUTO. Если узел ITX лёг, Gemini не висит, а уходит на chroma.
-5. Watchdog раз в 30 минут проверяет **страну выхода** текущего узла; RU/BY/KZ → переключение на AUTO.
+1. Все хосты из таблицы — в `rules-itx.yaml` (группа `GEMINI`). Остальной Google (поиск, YouTube, `mtalk`/`fcm` — push, `play`/`android` — Play) намеренно **не** трогаем: иначе падение узла = нет пушей и нет Play.
+2. QUIC к Google перекрыт (`quic_block.sh`), иначе браузер ходил UDP напрямую с RU-IP.
+3. Группа `GEMINI` = fallback `ITX → ITXFAST → PROXY`: падение узла ITX больше не уводит Gemini в случайную (потенциально российскую) страну.
+4. Watchdog раз в 30 минут проверяет **страну выхода туннеля** (запрос через `PROXY`, а не DIRECT); RU/BY/KZ → переключение на AUTO.
+5. Российские узлы из подписки отбрасываются в `update.py` — автоматика не может тихо подменить страну.
+6. **Терпение.** После смены маршрута Google пересчитывает регион не мгновенно: в проверенном случае приложение заработало через пару часов, голос — ещё через два. Не спешить менять правила каждые 10 минут.
 
 ### Как проверяется доступность
 `gemini_check.sh <socks_port>`: запрос `https://gemini.google.com/` и поиск служебного флага `45631641`:
@@ -220,7 +236,9 @@ Google определяет регион по **всем** запросам се
 `add_rule`, `bulk_proxy`, `probe`, `myip`, `rename_device`, `backups`, `restore`, `history`,
 `traffic_daily`, `notify_test`, `logs&f=`, `set_interval`, `set_autosub`, `fullcheck`,
 `itx_list`, `itx_pick`, `itx_block`, `itx_on/_off`, `google_itx_on/_off`, `tg_notify_on/_off`,
-`autosub_on/_off`, `ads_on/_off`, `gemini_check`.
+`autosub_on/_off`, `ads_on/_off`, `gemini_check`, `route_check` (+`&host=`).
+
+`route_check` — мини-матчер правил (`route_check.py`): читает `rules:` из `config.yaml` и локальные `rules-*.yaml`, отдаёт для каждого хоста `policy`/`rule`/`ok`. Сети не касается, поэтому работает даже когда прокси лежит. В панели — карточка **«Маршруты Gemini»** (раздел «Сервис»).
 
 `config` отдаёт: `router`, `zapret`, `mihomo`, `version`, `subtitle`, `contact`, `interval`, `tg`, `itx_available`.
 
@@ -251,7 +269,13 @@ Google определяет регион по **всем** запросам се
 - Правки скриптов на диске не подхватываются уже запущенным процессом — перезапускать сервис.
 - mihomo API: `PUT /configs?force=false` — горячая перезагрузка; `PUT /providers/rules/<name>` — только правила.
 - `api.cgi` — POSIX sh; вставлять блоки только через python-скрипты (кавычки в PowerShell ломают heredoc).
-- **DNS не трогать.** DoH (Google/Cloudflare) настроен у пользователя; любые правила, отправляющие DoH «напрямую», могут убить резолв. Этот урок уже получен.
+- **DNS не трогать.** DoH (Google/Cloudflare) настроен у пользователя; любые правила, отправляющие DoH «напрямую», могут убить резолв. Этот урок уже получен. В версии 2.2.0 в начале `rules` стоят явные `DIRECT` для `dns.google`, `cloudflare-dns.com`, `one.one.one.one`, `dns.quad9.net`, `doh.opendns.com` и адресов `8.8.8.8/8.8.4.4/1.1.1.1/1.0.0.1` — не удалять.
+- **Горячая перезагрузка конфига сбрасывает выбор в `PROXY`** и может поставить узел, которого уже нет в подписке: прокси-трафик висит до таймаута. Лечится `ensure_pin.sh` (вызывается из `update.sh` и watchdog). Проверять после любой перезагрузки.
+- **`update.sh` должен сам читать `ui.conf`.** Без этого при ручном запуске `MIHOMO_SECRET` пустой, `PUT /configs` получает 401, а скрипт рапортует успех (порт-то открыт). Так уже терялись правки.
+- **Регион Google проверяется по хостам, а не по странице.** Ловушки — `*-pa.clients6.google.com` (веб, WebChannel) и `*-pa.googleapis.com` (приложение). Если «страница открылась, а действие падает» — искать, какой служебный хост ушёл DIRECT.
+- **Смотреть, куда реально ушло соединение:** `GET /connections`, поле `metadata.sniffHost` (не `metadata.host` — оно часто пустое) + `rule`, `rulePayload`, `chains`. Самый быстрый способ проверить правило без браузера.
+- **Страна из `countries.txt` — это подпись из подписки, а не реальный выход.** Узел с подписью «Финляндия» выходил из Бразилии. Проверять только `https://ipinfo.io/country` через туннель.
+- **Watchdog меряет страну только через домен, который реально идёт через `PROXY`.** `www.cloudflare.com` не попадает ни под одно правило → DIRECT → видит IP роутера (Россия). Именно это полгода давало ложные переключения каждые 30 минут.
 
 ---
 

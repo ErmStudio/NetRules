@@ -3,7 +3,7 @@
 **Веб-панель управления маршрутизатором Keenetic: mihomo (Clash Meta) + zapret2.**
 Тёмный интерфейс, живой мониторинг, переключение правил в один клик, замер скорости узлов и проверка их здоровья.
 
-[![Version](https://img.shields.io/badge/version-1.9.3-4f8cff.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-2.2.0-4f8cff.svg)](CHANGELOG.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-4f8cff.svg)](LICENSE)
 ![Platform](https://img.shields.io/badge/platform-Keenetic-22d3ee)
 ![Shell](https://img.shields.io/badge/shell-POSIX-34d399)
@@ -119,6 +119,7 @@ chmod +x /opt/etc/init.d/S9*
 | `probe` | проверка доступности домена напрямую |
 | `speedtest` / `speed_last` | замер узлов и последний результат |
 | `nodecheck` / `health` | полная проверка узлов и её результат |
+| `route_check` | куда уйдёт запрос по правилам (`&host=` для одного хоста) |
 | `history` / `traffic_daily` | история задержки и трафик по дням |
 | `myip` | фактический IP выхода через туннель |
 | `backups` / `restore` | список и восстановление бэкапов |
@@ -138,6 +139,8 @@ router/
     check1.sh             проверка одного узла
     checkall.sh           проверка всех узлов
     watchdog.sh           сторож с фейловером
+    ensure_pin.sh         авто-выбор, если закреплённый узел мёртв
+    route_check.py        матчер правил: куда уйдёт запрос
     tasks.sh              расписание
     traffic_snapshot.sh   учёт трафика каждые 15 минут
     update.sh / update.py обновление подписки и конвертация

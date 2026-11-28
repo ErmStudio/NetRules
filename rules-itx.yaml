@@ -6,3 +6,17 @@ payload:
   - DOMAIN-SUFFIX,notebooklm.google.com
   - DOMAIN-SUFFIX,deepmind.google
   - DOMAIN-SUFFIX,deepmind.com
+  - DOMAIN-SUFFIX,robinfrontend-pa.googleapis.com
+  - DOMAIN-SUFFIX,pubsub.googleapis.com
+  - DOMAIN-SUFFIX,content-push.googleapis.com
+  - DOMAIN-SUFFIX,alkalimakersuite-pa.clients6.google.com
+  - DOMAIN-SUFFIX,firebaselogging-pa.googleapis.com
+  - DOMAIN-SUFFIX,accounts.google.com
+  - DOMAIN-SUFFIX,myaccount.google.com
+  - DOMAIN-SUFFIX,ogs.google.com
+  - DOMAIN-SUFFIX,apis.google.com
+  - DOMAIN-SUFFIX,consent.google.com
+  - DOMAIN-SUFFIX,googleusercontent.com
+  - DOMAIN-SUFFIX,photoslibrary.googleapis.com
+  - DOMAIN-SUFFIX,scone-pa.clients6.google.com
+  - DOMAIN-SUFFIX,geminiweb-pa.clients6.google.com

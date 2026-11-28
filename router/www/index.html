@@ -480,6 +480,13 @@ button.primary:hover{box-shadow:0 12px 30px rgba(79,140,255,.5)}
         <div id="td-list"><div class="srow"><span class="nm">пока нет данных — учёт идёт каждые 15 минут</span></div></div>
       </div>
 
+      <div class="card">
+        <div class="k" style="margin-bottom:8px">Маршруты Gemini</div>
+        <div class="srow"><span class="nm" id="gmr-state">проверить, куда уходят служебные хосты Google</span>
+          <button style="padding:5px 10px;font-size:11.5px" onclick="checkGeminiRoutes()">Проверить</button></div>
+        <div id="gmr-list" style="margin-top:8px"></div>
+      </div>
+
       <div class="card compact" style="grid-column:span 12">
         <div class="k" style="margin-bottom:8px">NetRules</div>
         <div class="srow" style="flex-wrap:wrap">
@@ -1120,6 +1127,25 @@ document.addEventListener('click',function(e){
 setInterval(refresh,5000);
 setInterval(function(){ if(view==='logs') loadLog(); },10000);
 setInterval(function(){ if(view==='speed'){ loadHealth(); loadSpeed(); } },15000);
+function checkGeminiRoutes(){
+  var st=document.getElementById('gmr-state'), list=document.getElementById('gmr-list');
+  if(!st||!list) return;
+  st.textContent='проверяю…'; list.innerHTML='';
+  api('action=route_check').then(function(d){
+    if(!d||!d.ok){ st.textContent='не удалось проверить'; return; }
+    var bad=0, html='';
+    d.hosts.forEach(function(x){
+      var good=(x.expect==='gemini')?(x.policy!=='DIRECT'):(x.policy==='DIRECT');
+      if(!good) bad++;
+      html+='<div class="srow"><span class="nm" style="word-break:break-all">'+x.host+'</span>'+
+            '<span style="font-size:11.5px;color:'+(good?'var(--ok)':'var(--bad)')+'">'+
+            x.policy+' · '+(x.rule||'')+'</span></div>';
+    });
+    list.innerHTML=html;
+    st.textContent = bad ? ('⚠ напрямую там, где не надо: '+bad+' из '+d.hosts.length)
+                         : ('все '+d.hosts.length+' хостов идут как надо');
+  }).catch(function(){ st.textContent='ошибка запроса'; });
+}
 </script>
 </body>
 </html>

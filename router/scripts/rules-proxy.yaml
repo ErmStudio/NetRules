@@ -28,15 +28,7 @@ payload:
 
   # ================= Google Photos (фото и превью) =================
   # ===== Google: аккаунт и согласия (иначе Gemini видит смешанный регион) =====
-  - DOMAIN,accounts.google.com
-  - DOMAIN,myaccount.google.com
-  - DOMAIN,ogs.google.com
-  - DOMAIN,apis.google.com
-  - DOMAIN,consent.google.com
   - DOMAIN,photos.google.com
-  - DOMAIN-SUFFIX,photoslibrary.googleapis.com
-  - DOMAIN-SUFFIX,googleusercontent.com
-
   # ================= Прочие блокируемые =================
   - DOMAIN-SUFFIX,x.com
   - DOMAIN-SUFFIX,twitter.com

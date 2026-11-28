@@ -41,7 +41,15 @@ say "4/7 настройки"
 if [ ! -f "$BASE/ui.conf" ]; then
   cp -f "$BASE/ui.conf.example" "$BASE/ui.conf" 2>/dev/null || printf 'MIHOMO_API="http://127.0.0.1:9090"\nMIHOMO_SECRET="change-me"\n' > "$BASE/ui.conf"
   chmod 600 "$BASE/ui.conf"
-  echo "   создан ui.conf — впишите MIHOMO_SECRET"
+  # секрет генерируем, а не оставляем change-me: в template.yaml стоит плейсхолдер #SECRET#,
+  # update.py подставит это значение в config.yaml
+  GEN=$(head -c 24 /dev/urandom | base64 | tr -dc 'A-Za-z0-9' | head -c 24)
+  if [ -n "$GEN" ]; then
+    sed -i "s|^MIHOMO_SECRET=.*|MIHOMO_SECRET=\"$GEN\"|" "$BASE/ui.conf"
+    echo "   создан ui.conf, секрет API сгенерирован"
+  else
+    echo "   создан ui.conf — впишите MIHOMO_SECRET"
+  fi
 fi
 [ -s "$BASE/sub.url" ] || { printf 'Вставьте ссылку подписки: '; read -r U; printf '%s\n' "$U" > "$BASE/sub.url"; }
 
